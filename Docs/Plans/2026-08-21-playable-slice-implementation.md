@@ -10,10 +10,10 @@
 
 | ID | Status | Depends on | Owner paths | Verification |
 |---|---|---|---|---|
-| T00 tuning | ready | baseline | `Runtime/Tuning`, `Tests/EditMode/Tuning` | EditMode tuning tests |
-| T01 combo | pending | T00 | `Runtime/Combo`, `Tests/EditMode/Combo` | EditMode combo tests |
-| T02 status | pending | T00 | `Runtime/Player/PlayerStatus.cs`, `Tests/EditMode/Player/PlayerStatusTests.cs` | EditMode status tests |
-| T03 targets | pending | T00 | `Runtime/Combat/BreakableObstacle.cs`, `Projectile.cs`, matching tests | EditMode target tests |
+| T00 tuning | complete | baseline | `Runtime/Tuning`, `Tests/EditMode/Tuning` | EditMode tuning tests: 2 passed |
+| T01 combo | ready | T00 | `Runtime/Combo`, `Tests/EditMode/Combo` | EditMode combo tests |
+| T02 status | ready | T00 | `Runtime/Player/PlayerStatus.cs`, `Tests/EditMode/Player/PlayerStatusTests.cs` | EditMode status tests |
+| T03 targets | ready | T00 | `Runtime/Combat/BreakableObstacle.cs`, `Projectile.cs`, matching tests | EditMode target tests |
 | T04 motor | pending | T01,T02 | `Runtime/Player/PlayerMotor2D.cs`, `Runtime/World/JumpReachability.cs`, matching tests | EditMode motor/reachability tests |
 | T05 combat | pending | T01,T02,T03 | `Runtime/Player/PlayerCombat.cs`, matching tests | EditMode combat tests |
 | T06 run | pending | T02 | `Runtime/Run`, `Tests/EditMode/Run` | EditMode lifecycle tests |
