@@ -14,11 +14,11 @@
 | T01 combo | complete | T00 | `Runtime/Combo`, `Tests/EditMode/Combo` | EditMode combo tests: 5 passed |
 | T02 status | complete | T00 | `Runtime/Player/PlayerStatus.cs`, `Tests/EditMode/Player/PlayerStatusTests.cs` | EditMode status tests: 5 passed |
 | T03 targets | complete | T00 | `Runtime/Combat/BreakableObstacle.cs`, `Projectile.cs`, matching tests | EditMode target tests: 3 passed |
-| T04 motor | ready | T01,T02 | `Runtime/Player/PlayerMotor2D.cs`, `Runtime/World/JumpReachability.cs`, matching tests | EditMode motor/reachability tests |
-| T05 combat | ready | T01,T02,T03 | `Runtime/Player/PlayerCombat.cs`, matching tests | EditMode combat tests |
-| T06 run | ready | T02 | `Runtime/Run`, `Tests/EditMode/Run` | EditMode lifecycle tests |
-| T07 world | pending | T03,T04 | `Runtime/World` except `JumpReachability.cs`, matching tests | EditMode world tests |
-| T08 adapter/views | pending | T05,T06 | `Runtime/Player/PlayerInput.cs`, `Runtime/UI`, matching tests | EditMode adapter/view compile tests |
+| T04 motor | complete | T01,T02 | `Runtime/Player/PlayerMotor2D.cs`, `Runtime/World/JumpReachability.cs`, matching tests | EditMode motor/reachability tests: 15 passed |
+| T05 combat | complete | T01,T02,T03 | `Runtime/Player/PlayerCombat.cs`, matching tests | EditMode combat tests: 7 passed |
+| T06 run | complete | T02 | `Runtime/Run`, `Tests/EditMode/Run` | EditMode lifecycle tests: 7 passed; Update delegation deferred to T10 PlayMode |
+| T07 world | ready | T03,T04 | `Runtime/World` except `JumpReachability.cs`, matching tests | EditMode world tests |
+| T08 adapter/views | ready | T05,T06 | `Runtime/Player/PlayerInput.cs`, `Runtime/UI`, matching tests | EditMode adapter/view compile tests |
 | T09 integration | pending | T04-T08 | input asset, layers, tuning asset, prefabs, playable scene | batchmode compile + EditMode |
 | T10 acceptance | pending | T09 | PlayMode tests and minimal tuning fixes | EditMode + PlayMode |
 
