@@ -95,6 +95,7 @@ namespace UPnL.SignalRush.Tests.Combo
             counter.RecordHit();
 
             Assert.That(changes, Is.EqualTo(1));
+            Assert.That(counter.Current, Is.Zero);
             Assert.That(counter.Interrupted, Is.Zero);
             Assert.That(current, Is.Zero);
             Assert.That(interrupted, Is.Zero);
