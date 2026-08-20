@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UPnL.SignalRush.Player;
 
 namespace UPnL.SignalRush.Run
 {
@@ -11,7 +12,8 @@ namespace UPnL.SignalRush.Run
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            TryReach();
+            if (other.attachedRigidbody != null && other.attachedRigidbody.TryGetComponent<PlayerStatus>(out _))
+                TryReach();
         }
 
         public bool TryReach()

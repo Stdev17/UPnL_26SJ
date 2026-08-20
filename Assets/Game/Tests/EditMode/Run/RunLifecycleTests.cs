@@ -112,6 +112,43 @@ namespace UPnL.SignalRush.Tests.Run
         }
 
         [Test]
+        public void GoalTriggerIgnoresColliderWithoutPlayerStatus()
+        {
+            var triggerObject = new GameObject();
+            var otherObject = new GameObject();
+            var trigger = triggerObject.AddComponent<GoalTrigger>();
+            otherObject.AddComponent<Rigidbody2D>();
+            var other = otherObject.AddComponent<BoxCollider2D>();
+            var onTriggerEnter = typeof(GoalTrigger).GetMethod("OnTriggerEnter2D", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            onTriggerEnter.Invoke(trigger, new object[] { other });
+
+            Assert.That(trigger.TryReach(), Is.True);
+            Object.DestroyImmediate(otherObject);
+            Object.DestroyImmediate(triggerObject);
+        }
+
+        [Test]
+        public void GoalTriggerAcceptsPlayerStatusCollider()
+        {
+            var triggerObject = new GameObject();
+            var playerObject = new GameObject();
+            var trigger = triggerObject.AddComponent<GoalTrigger>();
+            playerObject.AddComponent<Rigidbody2D>();
+            playerObject.AddComponent<UPnL.SignalRush.Player.PlayerStatus>();
+            var playerCollider = playerObject.AddComponent<BoxCollider2D>();
+            var onTriggerEnter = typeof(GoalTrigger).GetMethod("OnTriggerEnter2D", BindingFlags.Instance | BindingFlags.NonPublic);
+            var reached = false;
+            trigger.Reached += () => reached = true;
+
+            onTriggerEnter.Invoke(trigger, new object[] { playerCollider });
+
+            Assert.That(reached, Is.True);
+            Object.DestroyImmediate(playerObject);
+            Object.DestroyImmediate(triggerObject);
+        }
+
+        [Test]
         public void UnityMessagesAdvanceAndResolveTheRun()
         {
             var controllerObject = new GameObject();

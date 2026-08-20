@@ -148,6 +148,27 @@ namespace UPnL.SignalRush.Tests.World
         }
 
         [Test]
+        public void GameplayHeightDoesNotDriftAwayFromOrigin()
+        {
+            var fixture = CreateSpawner();
+            var tuning = new SerializedObject(fixture.tuning);
+            tuning.FindProperty("_jumpVelocity").floatValue = 8f;
+            tuning.ApplyModifiedPropertiesWithoutUndo();
+            fixture.spawner.Begin();
+
+            Chunk thirdGameplay = null;
+            for (var i = 0; i < 7; i++)
+            {
+                var spawned = fixture.spawner.SpawnNext();
+                if (spawned.Role == ChunkRole.GameplayFront)
+                    thirdGameplay = spawned;
+            }
+
+            Assert.That(thirdGameplay.transform.position.y, Is.LessThanOrEqualTo(3.5f));
+            Destroy(fixture);
+        }
+
+        [Test]
         public void SpawningSniperRearInjectsScenePlayerBeforeActivation()
         {
             var fixture = CreateSpawner();

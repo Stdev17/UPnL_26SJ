@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: Move
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
-  m_ActionId: 03044e27-bbdd-4165-ad33-bca9bcdd2396
+  m_ActionId: 5afc4a02-1e71-4675-abf8-640cc2bb242d

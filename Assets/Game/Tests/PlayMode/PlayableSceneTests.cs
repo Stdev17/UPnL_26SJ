@@ -40,6 +40,21 @@ namespace UPnL.SignalRush.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator AttackHitboxDoesNotDamagePlayerWithoutAnAttack()
+        {
+            yield return LoadPlayableScene();
+            var player = GameObject.Find("Player");
+            var obstacle = GameObject.Find("Obstacles").transform.GetChild(0).gameObject;
+            player.transform.position = obstacle.transform.position - new Vector3(1.1f, 0f, 0f);
+            Physics2D.SyncTransforms();
+
+            yield return new WaitForFixedUpdate();
+
+            Assert.That(obstacle.activeSelf, Is.True);
+            Assert.That(player.GetComponent<PlayerStatus>().State, Is.EqualTo(PlayerState.Active));
+        }
+
+        [UnityTest]
         public IEnumerator FinishedRunReusesAttackToRestart()
         {
             yield return LoadPlayableScene();

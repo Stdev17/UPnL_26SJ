@@ -282,6 +282,9 @@ namespace UPnL.SignalRush.Editor
             attackHitbox.layer = LayerMask.NameToLayer("PlayerAttack");
             attackHitbox.transform.SetParent(root.transform, false);
             attackHitbox.transform.localPosition = new Vector3(0.9f, 0f, 0f);
+            var attackBody = attackHitbox.AddComponent<Rigidbody2D>();
+            attackBody.bodyType = RigidbodyType2D.Kinematic;
+            attackBody.gravityScale = 0f;
             var attackCollider = attackHitbox.AddComponent<BoxCollider2D>();
             attackCollider.isTrigger = true;
             attackCollider.size = new Vector2(1.5f, 1.3f);

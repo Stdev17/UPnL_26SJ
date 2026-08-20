@@ -132,7 +132,8 @@ namespace UPnL.SignalRush.World
             var maxHeight = Mathf.Max(0f, Mathf.Min(
                 _tuning.MaxChunkHeightDelta,
                 JumpReachability.MaxHeight(_tuning.JumpVelocity, Physics2D.gravity.magnitude) - 0.25f));
-            _lastGameplayPosition += new Vector2(MaxGameplayGap, maxHeight);
+            var heightDirection = _nextGameplay % 2 == 0 ? -1f : 1f;
+            _lastGameplayPosition += new Vector2(MaxGameplayGap, maxHeight * heightDirection);
             return new ChunkSlot(role, _lastGameplayPosition);
         }
 

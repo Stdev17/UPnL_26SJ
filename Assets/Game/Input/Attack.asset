@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: Attack
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
-  m_ActionId: 027a308c-8501-44d1-8312-69e1bc61bce3
+  m_ActionId: 6cee8551-d91c-4c71-b592-90b12b78a9c6
