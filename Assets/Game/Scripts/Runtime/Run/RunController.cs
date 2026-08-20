@@ -5,6 +5,8 @@ namespace UPnL.SignalRush.Run
 {
     public sealed class RunController : MonoBehaviour
     {
+        [SerializeField] private GoalTrigger _goalTrigger;
+
         private bool _goalRequested;
         private bool _deadRequested;
 
@@ -14,6 +16,16 @@ namespace UPnL.SignalRush.Run
 
         public event Action<RunPhase> PhaseChanged;
         public event Action<RunResult> RunFinished;
+
+        private void Update()
+        {
+            Tick(Time.deltaTime);
+        }
+
+        private void FixedUpdate()
+        {
+            ResolveFixedStep();
+        }
 
         public void ReportGoalReached()
         {
@@ -53,6 +65,7 @@ namespace UPnL.SignalRush.Run
             Result = null;
             _goalRequested = false;
             _deadRequested = false;
+            _goalTrigger?.ResetTrigger();
             SetPhase(RunPhase.Running);
         }
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UPnL.SignalRush.Run;
@@ -107,6 +108,47 @@ namespace UPnL.SignalRush.Tests.Run
 
             Assert.That(reachedCount, Is.EqualTo(2));
 
+            Object.DestroyImmediate(triggerObject);
+        }
+
+        [Test]
+        public void UnityMessagesAdvanceAndResolveTheRun()
+        {
+            var controllerObject = new GameObject();
+            var controller = controllerObject.AddComponent<RunController>();
+            var controllerType = typeof(RunController);
+            var update = controllerType.GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic);
+            var fixedUpdate = controllerType.GetMethod("FixedUpdate", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            Assert.That(update, Is.Not.Null);
+            Assert.That(fixedUpdate, Is.Not.Null);
+
+            controller.ReportGoalReached();
+            fixedUpdate.Invoke(controller, null);
+
+            Assert.That(controller.Result, Is.EqualTo(RunResult.GoalReached));
+
+            Object.DestroyImmediate(controllerObject);
+        }
+
+        [Test]
+        public void RestartResetsAssignedGoalTrigger()
+        {
+            var controllerObject = new GameObject();
+            var triggerObject = new GameObject();
+            var controller = controllerObject.AddComponent<RunController>();
+            var trigger = triggerObject.AddComponent<GoalTrigger>();
+            var triggerField = typeof(RunController).GetField("_goalTrigger", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            Assert.That(triggerField, Is.Not.Null);
+            triggerField.SetValue(controller, trigger);
+            Assert.That(trigger.TryReach(), Is.True);
+
+            controller.Restart();
+
+            Assert.That(trigger.TryReach(), Is.True);
+
+            Object.DestroyImmediate(controllerObject);
             Object.DestroyImmediate(triggerObject);
         }
     }
