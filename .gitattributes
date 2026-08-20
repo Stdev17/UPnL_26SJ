@@ -1,0 +1,42 @@
+# 기본: 텍스트 파일은 LF로 통일 (Mac/Windows 혼용 대비)
+* text=auto eol=lf
+
+# 코드/스크립트
+*.cs text eol=lf diff=csharp
+*.shader text eol=lf
+*.hlsl text eol=lf
+*.cginc text eol=lf
+*.compute text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+
+# Unity YAML 직렬화 에셋 — 텍스트로 취급하되 자동 병합 시도는 안 함
+# (씬 소유권 분리 정책으로 대체하므로 merge 드라이버는 별도 설정하지 않음)
+*.unity text eol=lf -merge
+*.prefab text eol=lf -merge
+*.asset text eol=lf -merge
+*.meta text eol=lf -merge
+*.mat text eol=lf -merge
+*.anim text eol=lf -merge
+*.controller text eol=lf -merge
+*.physicsMaterial2D text eol=lf -merge
+
+# 바이너리 — diff/merge 시도 자체를 막아 저장소 오염 방지
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.psd binary
+*.tga binary
+*.tif binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.aif binary
+*.aiff binary
+*.ttf binary
+*.otf binary
+*.fbx binary
+*.mp4 binary
+*.mov binary
