@@ -32,13 +32,9 @@ namespace UPnL.SignalRush.Combo
         public void RecordHit()
         {
             var interrupted = Current;
-            var changed = Current != 0 || Interrupted != interrupted;
             Current = 0;
             Interrupted = interrupted;
-            if (changed)
-            {
-                NotifyChanged();
-            }
+            NotifyChanged();
         }
 
         private void Increment()

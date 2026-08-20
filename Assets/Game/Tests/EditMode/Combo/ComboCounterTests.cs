@@ -79,6 +79,27 @@ namespace UPnL.SignalRush.Tests.Combo
         }
 
         [Test]
+        public void ZeroComboHitRaisesChangedWithZeroInterrupted()
+        {
+            var counter = CreateCounter(out var gameObject, out var tuning);
+            var changes = 0;
+            var interrupted = -1;
+            counter.Changed += (_, _, eventInterrupted, _) =>
+            {
+                changes++;
+                interrupted = eventInterrupted;
+            };
+
+            counter.RecordHit();
+
+            Assert.That(changes, Is.EqualTo(1));
+            Assert.That(counter.Interrupted, Is.Zero);
+            Assert.That(interrupted, Is.Zero);
+
+            Destroy(gameObject, tuning);
+        }
+
+        [Test]
         public void SpeedMultiplierLinearlyMapsZeroAndTwentyComboToTuningSpeeds()
         {
             var counter = CreateCounter(out var gameObject, out var tuning);
