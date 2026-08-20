@@ -42,7 +42,7 @@ GDD v0.1 deliberately defers concrete types and function signatures. Do not crea
 1. `SignalRushTuning` constraints
 2. `ComboCounter` formulas
 3. `PlayerMotor2D` jump and movement
-4. Combat and health interaction
+4. Combat and player status interaction
 5. Chunk reachability and lifetime rules
 6. Run lifecycle and UI wiring
 

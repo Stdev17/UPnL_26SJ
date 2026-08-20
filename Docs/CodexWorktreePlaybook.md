@@ -10,16 +10,16 @@ Codex 자동 작업은 리포 내부의 ignore된 `.worktrees/`만 사용한다.
 
 사용자는 이 리포에서 아래 조건을 만족하는 Codex 작업에 대해 `.worktrees/` 생성과 정리를 매번 다시 확인하지 않아도 된다고 승인했다.
 
-1. 승인된 문서나 구현 계획에서 하나의 좁은 task scope를 정하고 `agent/<scope>` branch와 `.worktrees/<scope>`를 만든다.
+1. 승인된 문서나 구현 계획에서 하나의 좁은 task scope를 정하고 `agent/<scope>` branch와 `.worktrees/<scope>`를 만든다. 병렬 웨이브라면 먼저 `agent/wave-<n>` 통합 branch를 만들고 모든 task branch를 같은 wave 기준점에서 분기한다.
 2. worktree를 만들기 전에 `.worktrees/`가 Git ignore 대상인지, 같은 branch/path가 없는지, main의 기존 변경이 다른 작업 소유가 아닌지 확인한다.
 3. 작업 파일과 검증 명령은 아래 작업 계약에 기록하고 그 범위만 수정한다.
 4. worktree에서 필요한 테스트와 `git diff --check`가 모두 성공해야 커밋한다.
-5. 분기 이후 main이 바뀌지 않았고 main worktree가 깨끗할 때만 `git merge --ff-only agent/<scope>`로 자동 반영한다.
-6. main에서 같은 검증을 다시 통과한 뒤에만 worktree와 task branch를 일반 삭제한다.
+5. 단일 task는 기존처럼 main에 fast-forward한다. 병렬 task는 통합 담당자가 wave branch에 하나씩 병합·검증한 뒤, wave 분기 이후 main이 바뀌지 않았고 main worktree가 깨끗할 때만 `git merge --ff-only agent/wave-<n>`로 자동 반영한다.
+6. main에서 같은 검증을 다시 통과한 뒤에만 worktree, task branch, wave branch를 일반 삭제한다.
 
 다음 경우에는 자동 진행을 멈추고 사용자에게 보고한다.
 
-- main이 분기 이후 변경되어 fast-forward할 수 없다.
+- 단일 task 또는 wave 분기 이후 main이 변경되어 fast-forward할 수 없다.
 - 다른 작업이 같은 `.unity`, `.prefab`, `.asset`, `.meta`, `.inputactions`, package 또는 `ProjectSettings` 파일을 소유한다.
 - 테스트 실패, 아래 1회 복구 후에도 남는 Unity licensing 문제, merge 충돌 또는 보존되지 않은 변경이 있다.
 - `pull`, `push`, 강제 삭제, rebase, reset처럼 이 계약에 포함되지 않은 Git 작업이 필요하다.
@@ -117,7 +117,7 @@ git -C .worktrees/combo-rules add Assets/Game/Scripts/Runtime/Combo
 git -C .worktrees/combo-rules commit -m "feat: add combo rules"
 ```
 
-통합 담당자는 main에서 한 branch씩 통합하고 매번 검증한다.
+단일 task는 통합 담당자가 main에서 통합하고 검증한다.
 
 ```bash
 git switch main
@@ -126,6 +126,23 @@ git diff --check
 ```
 
 Unity 변경이면 merge 직후 main에서 Unity 검증을 다시 실행한다. 한 branch의 검증이 실패하면 다음 branch를 merge하지 않는다.
+
+병렬 웨이브는 main을 그대로 둔 채 통합 branch에서 task를 하나씩 병합한다. 첫 task는 fast-forward할 수 있고, 이후 task는 충돌 없는 일반 merge로 합친다. 각 병합 직후 focused 검증을 통과해야 다음 task를 합친다.
+
+```bash
+git branch agent/wave-1 main
+git switch agent/wave-1
+git merge agent/combo-rules
+git merge --no-ff agent/status-rules
+git diff --check
+```
+
+웨이브 전체 검증이 성공하면 main만 wave branch로 fast-forward한다.
+
+```bash
+git switch main
+git merge --ff-only agent/wave-1
+```
 
 ## 정리와 복구
 
@@ -147,4 +164,4 @@ git worktree prune
 - 모든 merge 전에 `git diff --check`를 실행한다.
 - Unity 검증은 변경이 발생한 worktree와 merge된 main에서 각각 실행한다.
 - Codex worktree는 ignore된 `.worktrees/` 아래에만 생성한다.
-- 자동 통합은 main이 분기 이후 바뀌지 않은 fast-forward인 경우에만 수행한다.
+- 자동 통합은 단일 task 또는 검증된 wave branch가 main에 fast-forward 가능한 경우에만 수행한다.

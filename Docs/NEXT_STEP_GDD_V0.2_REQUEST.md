@@ -9,7 +9,7 @@ Unity 프로젝트 기반 세팅 다음에는 gameplay 계약이 필요합니다
 - Product Name은 `SIGNAL RUSH`, Company Name은 `UPnL`, Linear color space와 새 Input System은 유지되어 있다.
 - Cinemachine 3.1.7로 갱신했고 `packages-lock.json`과 Unity 6000.5 EditMode compile/test를 확인했다.
 - gameplay class, scene, prefab, test는 GDD v0.2 계약 전이라 의도적으로 생성하지 않았다.
-- 기존 SampleScene과 범용 Input Actions는 보존했다. v0.2 계약 수신 후 게임용 scene과 `Move`, `Jump`, `Attack`, `Restart` binding을 확정한다.
+- 기존 SampleScene과 범용 Input Actions는 보존했다. gameplay runtime action은 `Move`, `Jump`, `Attack` 세 개로 확정한다. 런 종료 뒤 `Attack`을 재시작 확인으로 재사용한다.
 
 ## 1. 현재 미결 항목 확정
 
@@ -37,35 +37,31 @@ Unity 프로젝트 기반 세팅 다음에는 gameplay 계약이 필요합니다
 
 | From | Trigger | Guard | To/overlay | 허용 입력 | 종료 조건 |
 |---|---|---|---|---|---|
-| Run | Jump 입력 | 접지 상태, Hit/Dead 아님 | Jump | Move, Attack | 착지 → Run; 피해 → Hit/Dead |
+| Run | Jump 입력 | 접지 상태, Hit/Dead 아님 | Jump | Move, Attack | 착지 → Run; 피해 → Hit |
 | Run | Attack 입력 | 공격 중 아님, Hit/Dead 아님 | Attack overlay on Run | Move, Jump, Attack | 공격 판정/애니메이션 종료 → Run |
-| Run | 피해 요청 | 무적 아님, 체력 > 1 | Hit | 없음 | 경직/무적 시간 종료 → Run |
-| Run | 치명 피해 또는 즉사 낙사 | 체력 ≤ 0 또는 Q3이 즉사 | Dead | Restart만 | Restart → Run |
+| Run | 피해 요청 | 무적 아님 | Hit | 없음 | 경직 종료 → Run, 무적은 별도 타이머 종료 |
+| Run/Jump | 낙사 요청 | Respawning/Dead 아님 | Respawning | 없음 | `RespawnLockSeconds` 뒤 안전 위치에서 Run |
 | Jump | Attack 입력 | 공격 중 아님, Hit/Dead 아님 | Attack overlay on Jump | Move, Attack | 공격 판정/애니메이션 종료 → Jump |
-| Jump | 착지 | 지면 감지 | Run | Move, Jump, Attack | 피해 → Hit/Dead |
-| Jump | 피해 요청 | 무적 아님, 체력 > 1 | Hit | 없음 | 경직/무적 시간 종료 → Run |
-| Jump | 치명 피해 또는 즉사 낙사 | 체력 ≤ 0 또는 Q3이 즉사 | Dead | Restart만 | Restart → Run |
+| Jump | 착지 | 지면 감지 | Run | Move, Jump, Attack | 피해 → Hit |
+| Jump | 피해 요청 | 무적 아님 | Hit | 없음 | 경직 종료 → 접지면 Run, 아니면 Jump |
 | Attack | Attack 입력 | 공격 중이고 buffer가 비어 있음 | 다음 Attack 1회 buffer | Move/Jump는 기반 상태에 따름 | 현재 공격 종료 후 buffered Attack 시작; 없으면 기반 상태(Run/Jump) 복귀 |
-| Attack | 피해 요청 | 무적 아님, 체력 > 1 | Hit | 없음 | 경직/무적 시간 종료 → Run |
-| Attack | 치명 피해 또는 즉사 낙사 | 체력 ≤ 0 또는 Q3이 즉사 | Dead | Restart만 | Restart → Run |
-| Hit | 경직 종료 | 생존 | Run | 없음 | Run 진입 후 Move, Jump, Attack 허용 |
-| Hit | 치명 피해 | 체력 ≤ 0 | Dead | Restart만 | Restart → Run |
-| Dead | Restart 입력 | 재시작 가능 | Run | Restart만 | 플레이어·런 상태 초기화 완료 |
+| Attack | 피해 요청 | 무적 아님 | Hit | 없음 | 공격 buffer 폐기, 경직 종료 뒤 기반 상태 복귀 |
+| Hit | 경직 종료 | 런 진행 중 | Run 또는 Jump | 없음 | 복귀 뒤 Move, Jump, Attack 허용 |
+| Dead | Attack 입력 | 런 종료 뒤 재시작 가능 | Run | Attack만 | 플레이어·런 상태 초기화 완료 |
 
 Attack은 배타 상태가 아니라 Run 또는 Jump 위에서 동작하는 overlay
-Hit 종료 시 접지 상태면 Run, 공중이면 Jump로 복귀한다. Hit/Dead 진입 시 공격 buffer는 폐기한다.
+Hit 종료 시 접지 상태면 Run, 공중이면 Jump로 복귀한다. Hit/Respawning/Dead 진입 시 공격 buffer는 폐기한다. 체력 수치는 없으며 `Dead`는 런 종료 상태 표현에만 사용한다.
 
 ## 3. 입력 binding 확정
 
-GDD에서 다른 승인 액션을 추가하지 않는 한 runtime action은 `Move`, `Jump`, `Attack`, `Restart`만 둡니다.
+GDD에서 다른 승인 액션을 추가하지 않는 한 runtime action은 `Move`, `Jump`, `Attack`만 둡니다.
 
 | Action | 기본 키 | 보조 키 | press/hold 동작 |
 |---|---|---|---|
 | Move |  |  |  |
 | Jump |  |  |  |
 | Attack |  |  |  |
-| Restart |  |  |  |
-키는 나중에 정하도록 하겠습니다. 
+런 종료 화면에서는 `Attack` press를 재시작 확인으로 해석합니다. 키는 나중에 정하도록 하겠습니다.
 
 ## 4. 타입 책임과 공개 계약 확정
 
@@ -87,7 +83,6 @@ public readonly struct ChunkSlot
 public sealed class SignalRushTuning : ScriptableObject
 {
     public int PixelsPerUnit { get; }
-    public int MaxHealth { get; }                 // TUNE-P1
     public float BaseRunSpeed { get; }            // TUNE-P2
     public float MaxRunSpeed { get; }             // TUNE-P3
     public float RespawnLockSeconds { get; }      // TUNE-P6
@@ -129,14 +124,18 @@ public sealed class PlayerCombat : MonoBehaviour
     public void RequestAttack();
 }
 
-public sealed class PlayerHealth : MonoBehaviour
+public enum PlayerState { Active, Hit, Respawning, Dead }
+
+public sealed class PlayerStatus : MonoBehaviour
 {
-    public int CurrentHealth { get; }
+    public PlayerState State { get; }
     public bool IsInvulnerable { get; }
-    public event Action<int> HealthChanged;
+    public bool IsControlLocked { get; }
+    public event Action<PlayerState> StateChanged;
     public event Action<DamageCause> Hit;
-    public event Action Died;
     public void RequestDamage(DamageCause cause);
+    public void RequestRespawn();
+    public void MarkDead();
 }
 
 public sealed class ComboCounter : MonoBehaviour
@@ -198,7 +197,6 @@ public sealed class RunHud : MonoBehaviour
 
 public sealed class ResultView : MonoBehaviour
 {
-    public event Action RestartRequested;
     public void Show(RunResult result);
 }
 ```
@@ -208,7 +206,7 @@ public sealed class ResultView : MonoBehaviour
 - `RunController.ReportGoalReached()`와 `ReportPlayerDead()`는 `Running`에서만 접수한다. 같은 physics step에 둘 다 접수되면 `GoalReached` 하나만 발행한다. 종료 뒤 호출은 무시한다.
 - `PlayerMotor2D`의 입력 요청은 조작 잠금 또는 런 종료 중 무시한다. `Respawn()`은 velocity를 초기화하고 지정 위치로 옮긴다.
 - `PlayerCombat.RequestAttack()` 한 번은 같은 공격 판정에 겹친 모든 유효 장애물과 총알을 각각 한 번 처리한다. 공격 중 재입력 규칙은 2번 단락에서 확정한다.
-- `PlayerHealth.RequestDamage()`는 무적 또는 사망 상태에서 무시한다.
+- `PlayerStatus.RequestDamage()`는 무적, 리스폰 또는 사망 상태에서 무시한다. `CurrentHealth`와 `HealthChanged`는 존재하지 않는다.
 - `ComboCounter`는 파괴와 패링마다 증가하고 피격 때 초기화한다. 같은 대상의 중복 event는 대상 쪽에서 차단한다.
 - `BreakableObstacle.TryBreak()`와 `Projectile.TryParry()`는 최초 성공만 `true`와 event를 반환하고 이후에는 `false`를 반환한다.
 - `Sniper.TryActivate()`는 이미 예고/투사체 처리 중이면 `false`를 반환한다. 목표 위치는 발사 직전까지 계속 플레이어를 정확히 조준하며, 추후 시각 요소 구현에 상태 값이 필요하다.
@@ -233,7 +231,7 @@ public sealed class ResultView : MonoBehaviour
 
 ```text
 OBJ-PLAYER / PF_Player (owner: 윤슬, layer: Player)
-├─ Root: PlayerMotor2D, PlayerCombat, PlayerHealth, ComboCounter
+├─ Root: PlayerMotor2D, PlayerCombat, PlayerStatus, ComboCounter
 │  ├─ Rigidbody2D: Dynamic
 │  └─ CapsuleCollider2D: trigger Off, 몸통/지면 판정 소유
 ├─ Visual (layer: Player): SpriteRenderer, Animator
@@ -274,7 +272,6 @@ OBJ-GOAL / PF_Goal (owner: 윤슬, layer: Goal)
 
 | ID | 의미 | 단위 | 초기값 |
 |---|---|---|---:|
-| `TUNE-P1` | 플레이어 최대 체력 | hit | `3` |
 | `TUNE-P2` | 콤보가 없을 때 기본 달리기 속도 | world unit/s | `6.0` |
 | `TUNE-P3` | 콤보로 증가할 수 있는 최대 달리기 속도 | world unit/s | `10.0` |
 | `TUNE-P6` | 낙사 후 조작 잠금과 리스폰 연출 시간 | s | `1.0` |
@@ -284,11 +281,11 @@ OBJ-GOAL / PF_Goal (owner: 윤슬, layer: Goal)
 | `TUNE-G4` | 인접 gameplay 청크 사이의 최대 수평 간격 | world unit | `2.0` |
 | `TUNE-T1` | 스나이퍼 예고 시작부터 발사까지의 고정 딜레이 | s | `0.8` |
 
-**중요**: 플레이어의 최대 체력은 존재하지 않는 것으로 전제하며, 따라서 여기서는 `999`로 처리하거나 아예 체력 기능을 구현하지 않는다. 제한시간이 초과되면 어차피 게임 오버이기 때문이다. 장애물을 맞으면 시간이 지연되고 기본 속도로 떨어지기도 하고.
+**중요**: 플레이어 최대 체력은 존재하지 않으며 체력 기능을 구현하지 않는다. 장애물이나 투사체에 맞으면 `PlayerStatus`가 Hit/무적을 처리하고 콤보가 초기화된다. 낙사는 Respawning으로 전환해 시간을 잃게 한다.
 
 검증 규칙:
 
-- `0 < TUNE-P2 < TUNE-P3`이고 `TUNE-P1`, `TUNE-P6`, `TUNE-S2`, `TUNE-G1`은 양수여야 한다.
+- `0 < TUNE-P2 < TUNE-P3`이고 `TUNE-P6`, `TUNE-S2`, `TUNE-G1`은 양수여야 한다.
 - 물리 설정으로 계산한 최대 점프 높이를 `H`, 안전 마진을 `0.25 world unit`이라 할 때 실제 높이차는 `min(TUNE-G2, H - 0.25)`로 제한한다.
 - `TUNE-G4`는 기본 속도 `TUNE-P2`에서의 실제 점프 궤적으로 건널 수 있는 값 이하여야 한다. 값 검증은 이동 구현의 순수 계산과 같은 식을 사용한다.
 - 예고 뒤 플레이어에게 보이는 총알 비행 구간은 약 `0.2s`만 제공한다. 반응형 회피가 아니라 리듬 예측형 공격이므로 예고 시작과 발사 사이에는 항상 `TUNE-T1`의 고정 딜레이를 둔다.
@@ -301,9 +298,9 @@ OBJ-GOAL / PF_Goal (owner: 윤슬, layer: Goal)
 1. 장애물과 총알이 동시에 유효할 때 공격 입력 결과
    - 같은 공격 판정 안의 장애물 파괴와 총알 패링이 모두 성공한다.
 2. 무적 중 피해 요청 결과
-   - 피해를 적용하지 않고 체력·콤보·무적 시간을 변경하지 않는다.
+   - 상태·콤보·무적 시간을 변경하지 않는다.
 3. Q3에 따른 낙사와 안전 지점 복귀 결과
-   - 체력을 줄이지 않고 `TUNE-P6` 동안 조작을 잠근 뒤 최근 안전 지점으로 복귀한다.
+   - `TUNE-P6` 동안 조작을 잠근 뒤 최근 안전 지점으로 복귀한다.
 4. 스나이퍼 예고 중이거나 총알이 활성인 청크의 정리 시도 결과
    - 스나이퍼는 `SniperRear` 청크에만 등장한다. 예고 중이거나 총알이 미해결인 청크는 정리하지 않고, 총알이 적중·패링·화면 이탈로 해결된 뒤 정리할 수 있다.
 5. 같은 physics step에 목표 도달과 사망이 함께 발생한 경우의 우선순위
@@ -320,4 +317,4 @@ OBJ-GOAL / PF_Goal (owner: 윤슬, layer: Goal)
 
 예상 검토 시간: **10~15분**.
 
-이 계약이 도착하면 튜닝 validation과 순수 콤보 테스트부터 시작하고, 이동 → 전투/체력 → 청크 생성 → 런/UI 순서로 구현합니다.
+이 계약이 도착하면 튜닝 validation과 순수 콤보 테스트부터 시작하고, 이동 → 전투/상태 → 청크 생성 → 런/UI 순서로 구현합니다.
