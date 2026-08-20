@@ -1,0 +1,7 @@
+{
+  "name": "UPnL.SignalRush.EditModeTests",
+  "rootNamespace": "UPnL.SignalRush.Tests",
+  "references": ["UPnL.SignalRush.Runtime"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "includePlatforms": ["Editor"]
+}

@@ -7,7 +7,7 @@ Unity 프로젝트 기반 세팅 다음에는 gameplay 계약이 필요합니다
 - `Assets/Game`과 `UPnL.SignalRush.Runtime` 단일 runtime assembly가 생성되어 있다.
 - 코딩·애셋·Git 협업 규칙은 `Docs/Engineering.md`가 정본이다.
 - Product Name은 `SIGNAL RUSH`, Company Name은 `UPnL`, Linear color space와 새 Input System은 유지되어 있다.
-- Cinemachine 3.1.5가 manifest에 추가됐다. 로컬 Unity Licensing Client의 프로토콜 불일치로 batchmode가 끝나지 않아 `packages-lock.json` 갱신과 최종 compile 확인은 Editor를 정상 실행한 뒤 남아 있다.
+- Cinemachine 3.1.7로 갱신했고 `packages-lock.json`과 Unity 6000.5 EditMode compile/test를 확인했다.
 - gameplay class, scene, prefab, test는 GDD v0.2 계약 전이라 의도적으로 생성하지 않았다.
 - 기존 SampleScene과 범용 Input Actions는 보존했다. v0.2 계약 수신 후 게임용 scene과 `Move`, `Jump`, `Attack`, `Restart` binding을 확정한다.
 

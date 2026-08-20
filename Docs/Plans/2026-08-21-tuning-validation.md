@@ -20,6 +20,17 @@
 
 ---
 
+### Prerequisite: Restore the Unity baseline
+
+**Files:**
+- Modify: `Packages/manifest.json`
+- Unity-resolved: `Packages/packages-lock.json`
+
+- [x] Upgrade Cinemachine from `3.1.5` to stable `3.1.7`, whose official changelog includes the InstanceID-to-EntityID conversion required by Unity 6000.5.
+- [x] Run the complete EditMode suite and require a clean compile before adding gameplay tests.
+
+---
+
 ### Task 1: Read-only tuning asset and scalar validation
 
 **Files:**
@@ -31,7 +42,7 @@
 - Consumes: Unity `ScriptableObject`, `Mathf`, and serialized Inspector values.
 - Produces: read-only `PixelsPerUnit`, `BaseRunSpeed`, `MaxRunSpeed`, `RespawnLockSeconds`, `ProjectileSpeed`, `SpawnAheadChunkCount`, `MaxChunkHeightDelta`, `MaxChunkGap`, and `SniperWarningSeconds` properties.
 
-- [ ] **Step 1: Add the EditMode test assembly and failing tests**
+- [x] **Step 1: Add the EditMode test assembly and failing tests**
 
 ```json
 {
@@ -57,13 +68,10 @@ namespace UPnL.SignalRush.Tests.Tuning
         public void DefaultsMatchApprovedContract()
         {
             var tuning = ScriptableObject.CreateInstance<SignalRushTuning>();
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuning.PixelsPerUnit, Is.EqualTo(32));
-                Assert.That(tuning.BaseRunSpeed, Is.EqualTo(6f));
-                Assert.That(tuning.MaxRunSpeed, Is.EqualTo(10f));
-                Assert.That(tuning.SpawnAheadChunkCount, Is.EqualTo(2));
-            });
+            Assert.That(tuning.PixelsPerUnit, Is.EqualTo(32));
+            Assert.That(tuning.BaseRunSpeed, Is.EqualTo(6f));
+            Assert.That(tuning.MaxRunSpeed, Is.EqualTo(10f));
+            Assert.That(tuning.SpawnAheadChunkCount, Is.EqualTo(2));
             Object.DestroyImmediate(tuning);
         }
 
@@ -79,43 +87,38 @@ namespace UPnL.SignalRush.Tests.Tuning
             serialized.FindProperty("_maxChunkHeightDelta").floatValue = -1f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            tuning.SendMessage("OnValidate");
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuning.PixelsPerUnit, Is.EqualTo(1));
-                Assert.That(tuning.BaseRunSpeed, Is.GreaterThan(0f));
-                Assert.That(tuning.MaxRunSpeed, Is.GreaterThan(tuning.BaseRunSpeed));
-                Assert.That(tuning.SpawnAheadChunkCount, Is.EqualTo(1));
-                Assert.That(tuning.MaxChunkHeightDelta, Is.Zero);
-            });
+            Assert.That(tuning.PixelsPerUnit, Is.EqualTo(1));
+            Assert.That(tuning.BaseRunSpeed, Is.GreaterThan(0f));
+            Assert.That(tuning.MaxRunSpeed, Is.GreaterThan(tuning.BaseRunSpeed));
+            Assert.That(tuning.SpawnAheadChunkCount, Is.EqualTo(1));
+            Assert.That(tuning.MaxChunkHeightDelta, Is.Zero);
             Object.DestroyImmediate(tuning);
         }
     }
 }
 ```
 
-- [ ] **Step 2: Run EditMode tests and verify RED**
+- [x] **Step 2: Run EditMode tests and verify RED**
 
 Run:
 
 ```bash
-/Applications/Unity/Hub/Editor/6000.5.9f1/Unity.app/Contents/MacOS/Unity -batchmode -projectPath /Users/leta/Github/UPnL_26SJ -runTests -testPlatform EditMode -testFilter UPnL.SignalRush.Tests.Tuning.SignalRushTuningTests -testResults /tmp/signal-rush-red.xml -quit
+/Applications/Unity/Hub/Editor/6000.5.9f1/Unity.app/Contents/MacOS/Unity -batchmode -projectPath . -runTests -testPlatform EditMode -testFilter UPnL.SignalRush.Tests.Tuning.SignalRushTuningTests -testResults /tmp/signal-rush-red.xml
 ```
 
 Expected: compilation fails because `UPnL.SignalRush.Tuning.SignalRushTuning` does not exist.
 
-- [ ] **Step 3: Add the minimal `SignalRushTuning` implementation**
+- [x] **Step 3: Add the minimal `SignalRushTuning` implementation**
 
 Create a sealed `ScriptableObject` with the nine serialized defaults and read-only properties above. Its private `OnValidate` uses `Mathf.Max`: PPU/count clamp to `1`, positive floats clamp to `0.01f`, distances clamp to `0f`, and maximum speed clamps to at least `BaseRunSpeed + 0.01f`.
 
-- [ ] **Step 4: Run focused EditMode tests and verify GREEN**
+- [x] **Step 4: Run focused EditMode tests and verify GREEN**
 
 Run the Step 2 command with result path `/tmp/signal-rush-green.xml`.
 
 Expected: two tests pass with zero failures.
 
-- [ ] **Step 5: Run the complete EditMode suite**
+- [x] **Step 5: Run the complete EditMode suite**
 
 Run the same Unity command without `-testFilter` and write `/tmp/signal-rush-editmode.xml`.
 

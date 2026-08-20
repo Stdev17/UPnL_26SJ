@@ -21,7 +21,7 @@ Codex 자동 작업은 리포 내부의 ignore된 `.worktrees/`만 사용한다.
 
 - main이 분기 이후 변경되어 fast-forward할 수 없다.
 - 다른 작업이 같은 `.unity`, `.prefab`, `.asset`, `.meta`, `.inputactions`, package 또는 `ProjectSettings` 파일을 소유한다.
-- 테스트 실패, Unity licensing 문제, merge 충돌 또는 보존되지 않은 변경이 있다.
+- 테스트 실패, 아래 1회 복구 후에도 남는 Unity licensing 문제, merge 충돌 또는 보존되지 않은 변경이 있다.
 - `pull`, `push`, 강제 삭제, rebase, reset처럼 이 계약에 포함되지 않은 Git 작업이 필요하다.
 
 ## 역할
@@ -105,6 +105,10 @@ git -C .worktrees/combo-rules status --short
 ```
 
 Unity 코드 또는 asset 변경이면 해당 worktree를 대상으로 Unity Test Runner 또는 batchmode compile도 실행한다. 검증이 실패하면 커밋이나 통합 전에 원인을 기록하고 해결한다.
+
+`-runTests`에는 `-quit`을 함께 주지 않는다. Test Runner가 완료 후 직접 종료하며, 종료 코드뿐 아니라 지정한 `-testResults` XML의 `result="Passed"`와 실패 0건을 확인한다.
+
+Unity가 `Unity-LicenseClient-<user>-<editor-version>` 채널을 기다리다 실패하면 먼저 해당 Unity 실행이 끝났는지 확인한다. 실패한 실행이 남긴 같은 채널의 Editor 전용 Licensing Client만 정확한 PID로 한 번 종료하고 재시도한다. Hub의 `Unity-LicenseClient-<user>`는 종료하지 않으며, 재시도도 실패하면 자동 진행을 멈춘다.
 
 작업 완료 후에는 작업 branch에만 필요한 파일을 명시적으로 커밋한다.
 
