@@ -55,7 +55,7 @@ namespace UPnL.SignalRush.Player
 
         public void RequestRespawn()
         {
-            if (State == PlayerState.Dead)
+            if (State == PlayerState.Respawning || State == PlayerState.Dead)
                 return;
 
             _hitLockRemaining = 0f;

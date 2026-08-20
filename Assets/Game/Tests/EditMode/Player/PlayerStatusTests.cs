@@ -71,6 +71,22 @@ namespace UPnL.SignalRush.Tests.Player
         }
 
         [Test]
+        public void RepeatedRespawnDoesNotExtendTheCurrentRespawnLock()
+        {
+            var (status, gameObject, tuning) = CreateStatus();
+
+            status.RequestRespawn();
+            status.Tick(tuning.RespawnLockSeconds / 2f);
+            status.RequestRespawn();
+            status.Tick(tuning.RespawnLockSeconds / 2f);
+
+            Assert.That(status.State, Is.EqualTo(PlayerState.Active));
+
+            Object.DestroyImmediate(gameObject);
+            Object.DestroyImmediate(tuning);
+        }
+
+        [Test]
         public void DeadIgnoresDamageAndRespawnUntilReset()
         {
             var (status, gameObject, tuning) = CreateStatus();
