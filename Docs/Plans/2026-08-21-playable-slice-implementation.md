@@ -17,9 +17,9 @@
 | T04 motor | complete | T01,T02 | `Runtime/Player/PlayerMotor2D.cs`, `Runtime/World/JumpReachability.cs`, matching tests | EditMode motor/reachability tests: 15 passed |
 | T05 combat | complete | T01,T02,T03 | `Runtime/Player/PlayerCombat.cs`, matching tests | EditMode combat tests: 7 passed |
 | T06 run | complete | T02 | `Runtime/Run`, `Tests/EditMode/Run` | EditMode lifecycle tests: 7 passed; Update delegation deferred to T10 PlayMode |
-| T07 world | ready | T03,T04 | `Runtime/World` except `JumpReachability.cs`, matching tests | EditMode world tests |
-| T08 adapter/views | ready | T05,T06 | `Runtime/Player/PlayerInput.cs`, `Runtime/UI`, matching tests | EditMode adapter/view compile tests |
-| T09 integration | pending | T04-T08 | input asset, layers, tuning asset, prefabs, playable scene | batchmode compile + EditMode |
+| T07 world | complete | T03,T04 | `Runtime/World` except `JumpReachability.cs`, matching tests | EditMode world tests: 19 passed; Combat missed tests: 5 passed |
+| T08 adapter/views | complete | T05,T06 | `Runtime/Player/PlayerInput.cs`, `Runtime/UI`, matching tests | EditMode input/motor tests: 12 passed; view tests: 4 passed |
+| T09 integration | ready | T04-T08 | input asset, layers, tuning asset, prefabs, playable scene | batchmode compile + EditMode |
 | T10 acceptance | pending | T09 | PlayMode tests and minimal tuning fixes | EditMode + PlayMode |
 
 All paths above are relative to `Assets/Game/Scripts` or `Assets/Game/Tests` as appropriate. Workers must not edit scenes, prefabs, `.inputactions`, `ProjectSettings`, packages, this plan, or another task's paths.
