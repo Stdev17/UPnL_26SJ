@@ -80,6 +80,7 @@ namespace UPnL.SignalRush.Tests.Run
             fixture.bridge.HandleObstacle(obstacle);
 
             Assert.That(causes, Is.EqualTo(new[] { DamageCause.Projectile, DamageCause.Obstacle }));
+            Assert.That(obstacleObject.activeSelf, Is.False);
             Object.DestroyImmediate(projectileObject);
             Object.DestroyImmediate(obstacleObject);
             Destroy(fixture);
@@ -99,6 +100,24 @@ namespace UPnL.SignalRush.Tests.Run
 
             Assert.That(cause, Is.EqualTo(DamageCause.Projectile));
             Object.DestroyImmediate(projectileObject);
+            Destroy(fixture);
+        }
+
+        [Test]
+        public void ObstacleTriggerRoutesThroughPublicContactSeam()
+        {
+            var fixture = CreatePlayable();
+            DamageCause? cause = null;
+            fixture.status.Hit += value => cause = value;
+            var obstacleObject = new GameObject("Obstacle");
+            var collider = obstacleObject.AddComponent<BoxCollider2D>();
+            obstacleObject.AddComponent<BreakableObstacle>();
+
+            Invoke(fixture.bridge, "OnTriggerEnter2D", collider);
+
+            Assert.That(cause, Is.EqualTo(DamageCause.Obstacle));
+            Assert.That(obstacleObject.activeSelf, Is.False);
+            Object.DestroyImmediate(obstacleObject);
             Destroy(fixture);
         }
 

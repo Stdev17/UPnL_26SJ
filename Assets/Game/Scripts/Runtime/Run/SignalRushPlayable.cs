@@ -108,6 +108,8 @@ namespace UPnL.SignalRush.Run
         {
             if (other.TryGetComponent<Projectile>(out var projectile))
                 HandleProjectile(projectile);
+            else if (other.TryGetComponent<BreakableObstacle>(out var obstacle))
+                HandleObstacle(obstacle);
         }
 
         private void OnCollisionEnter2D(Collision2D collision)
@@ -124,8 +126,11 @@ namespace UPnL.SignalRush.Run
 
         public void HandleObstacle(BreakableObstacle obstacle)
         {
-            if (obstacle != null)
-                _playerStatus?.RequestDamage(DamageCause.Obstacle);
+            if (obstacle == null)
+                return;
+
+            _playerStatus?.RequestDamage(DamageCause.Obstacle);
+            obstacle.gameObject.SetActive(false);
         }
 
         private void HandleGoalReached()
