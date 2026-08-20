@@ -127,7 +127,10 @@ namespace UPnL.SignalRush.Player
             _subscribedStatus = _status;
 
             if (_subscribedStatus != null)
+            {
                 _subscribedStatus.StateChanged += HandleStateChanged;
+                _subscribedStatus.Hit += HandleHit;
+            }
         }
 
         private void UnsubscribeStatus()
@@ -136,6 +139,7 @@ namespace UPnL.SignalRush.Player
                 return;
 
             _subscribedStatus.StateChanged -= HandleStateChanged;
+            _subscribedStatus.Hit -= HandleHit;
             _subscribedStatus = null;
         }
 
@@ -143,6 +147,11 @@ namespace UPnL.SignalRush.Player
         {
             if (state != PlayerState.Active)
                 Interrupt();
+        }
+
+        private void HandleHit(DamageCause cause)
+        {
+            _combo?.RecordHit();
         }
     }
 }

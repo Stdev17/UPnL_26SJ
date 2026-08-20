@@ -85,6 +85,26 @@ namespace UPnL.SignalRush.Tests.Player
         }
 
         [Test]
+        public void AcceptedStatusHitResetsComboOnceWhileIgnoredDamageDoesNotResetAgain()
+        {
+            var fixture = CreateCombat();
+            fixture.combat.RequestAttack();
+            fixture.combo.RecordBreak();
+            fixture.combo.RecordParry();
+            var changes = 0;
+            fixture.combo.Changed += (_, _, _, _) => changes++;
+
+            fixture.status.RequestDamage(DamageCause.Projectile);
+            fixture.status.RequestDamage(DamageCause.Projectile);
+
+            Assert.That(fixture.combo.Current, Is.Zero);
+            Assert.That(fixture.combo.Interrupted, Is.EqualTo(2));
+            Assert.That(changes, Is.EqualTo(1));
+
+            Destroy(fixture);
+        }
+
+        [Test]
         public void MissingSerializedDependenciesDoNotThrow()
         {
             var gameObject = new GameObject("PlayerCombatWithoutDependencies");
