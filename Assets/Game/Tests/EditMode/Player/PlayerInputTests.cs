@@ -1,8 +1,9 @@
-using System.Reflection;
+using System.Collections;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.TestTools;
 using UPnL.SignalRush.Player;
 using UPnL.SignalRush.Run;
 using UPnL.SignalRush.Tuning;
@@ -52,20 +53,24 @@ namespace UPnL.SignalRush.Tests.Player
             Object.DestroyImmediate(gameObject);
         }
 
-        [Test]
-        public void MovePerformedAndCanceledForwardTheirValues()
+        [UnityTest]
+        public IEnumerator MovePerformedAndCanceledForwardTheirValues()
         {
+            yield return new EnterPlayMode(false);
             var fixture = CreateMoveFixture();
 
             try
             {
+                Assert.That(fixture.reference.action.enabled, Is.True);
                 SetMove(fixture, 1f);
+                yield return null;
                 fixture.motor.Simulate(true, 0.02f);
                 Assert.That(
                     fixture.body.linearVelocity.x,
                     Is.EqualTo(fixture.tuning.BaseRunSpeed + fixture.tuning.HorizontalCorrectionSpeed));
 
                 SetMove(fixture, 0f);
+                yield return null;
                 fixture.motor.Simulate(true, 0.02f);
                 Assert.That(fixture.body.linearVelocity.x, Is.EqualTo(fixture.tuning.BaseRunSpeed));
             }
@@ -73,20 +78,30 @@ namespace UPnL.SignalRush.Tests.Player
             {
                 Destroy(fixture);
             }
+
+            yield return new ExitPlayMode();
         }
 
-        [Test]
-        public void DisableAndReenableDoesNotRetainReleasedMove()
+        [UnityTest]
+        public IEnumerator DisableAndReenableDoesNotRetainReleasedMove()
         {
+            yield return new EnterPlayMode(false);
             var fixture = CreateMoveFixture();
 
             try
             {
                 SetMove(fixture, 1f);
-                Invoke(fixture.input, "OnDisable");
+                yield return null;
+                fixture.motor.Simulate(true, 0.02f);
+                Assert.That(
+                    fixture.body.linearVelocity.x,
+                    Is.EqualTo(fixture.tuning.BaseRunSpeed + fixture.tuning.HorizontalCorrectionSpeed));
+
+                fixture.input.enabled = false;
                 SetMove(fixture, 0f);
-                Invoke(fixture.input, "OnEnable");
-                InputSystem.Update();
+                yield return null;
+                fixture.input.enabled = true;
+                yield return null;
                 fixture.motor.Simulate(true, 0.02f);
 
                 Assert.That(fixture.body.linearVelocity.x, Is.EqualTo(fixture.tuning.BaseRunSpeed));
@@ -95,18 +110,23 @@ namespace UPnL.SignalRush.Tests.Player
             {
                 Destroy(fixture);
             }
+
+            yield return new ExitPlayMode();
         }
 
-        [Test]
-        public void MoveCanceledWhileLockedDoesNotReturnAfterUnlock()
+        [UnityTest]
+        public IEnumerator MoveCanceledWhileLockedDoesNotReturnAfterUnlock()
         {
+            yield return new EnterPlayMode(false);
             var fixture = CreateMoveFixture();
 
             try
             {
                 SetMove(fixture, 1f);
+                yield return null;
                 fixture.status.RequestRespawn();
                 SetMove(fixture, 0f);
+                yield return null;
                 fixture.status.Tick(fixture.tuning.RespawnLockSeconds);
                 fixture.motor.Simulate(true, 0.02f);
 
@@ -115,6 +135,17 @@ namespace UPnL.SignalRush.Tests.Player
             finally
             {
                 Destroy(fixture);
+            }
+
+            yield return new ExitPlayMode();
+        }
+
+        [UnityTearDown]
+        public IEnumerator ReturnToEditMode()
+        {
+            if (Application.isPlaying)
+            {
+                yield return new ExitPlayMode();
             }
         }
 
@@ -147,7 +178,6 @@ namespace UPnL.SignalRush.Tests.Player
             Assign(input, "_move", reference);
             Assign(input, "_motor", motor);
             gameObject.SetActive(true);
-            Invoke(input, "OnEnable");
             return (gameObject, input, motor, body, status, tuning, asset, reference, gamepad);
         }
 
@@ -165,17 +195,12 @@ namespace UPnL.SignalRush.Tests.Player
                 PlayerStatus status, SignalRushTuning tuning, InputActionAsset asset, InputActionReference reference,
                 Gamepad gamepad) fixture)
         {
-            Invoke(fixture.input, "OnDisable");
+            fixture.gameObject.SetActive(false);
             Object.DestroyImmediate(fixture.gameObject);
             Object.DestroyImmediate(fixture.tuning);
             Object.DestroyImmediate(fixture.reference);
             Object.DestroyImmediate(fixture.asset);
             InputSystem.RemoveDevice(fixture.gamepad);
-        }
-
-        private static void Invoke(object target, string methodName)
-        {
-            target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(target, null);
         }
 
         private static void Assign(Object target, string propertyName, Object value)
