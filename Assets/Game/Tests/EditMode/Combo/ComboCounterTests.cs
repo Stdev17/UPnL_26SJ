@@ -83,10 +83,12 @@ namespace UPnL.SignalRush.Tests.Combo
         {
             var counter = CreateCounter(out var gameObject, out var tuning);
             var changes = 0;
+            var current = -1;
             var interrupted = -1;
-            counter.Changed += (_, _, eventInterrupted, _) =>
+            counter.Changed += (eventCurrent, _, eventInterrupted, _) =>
             {
                 changes++;
+                current = eventCurrent;
                 interrupted = eventInterrupted;
             };
 
@@ -94,6 +96,7 @@ namespace UPnL.SignalRush.Tests.Combo
 
             Assert.That(changes, Is.EqualTo(1));
             Assert.That(counter.Interrupted, Is.Zero);
+            Assert.That(current, Is.Zero);
             Assert.That(interrupted, Is.Zero);
 
             Destroy(gameObject, tuning);
