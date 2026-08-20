@@ -123,6 +123,13 @@ namespace UPnL.SignalRush.Tests.Run
             Assert.That(update, Is.Not.Null);
             Assert.That(fixedUpdate, Is.Not.Null);
 
+            var elapsedBeforeUpdate = controller.ElapsedSeconds;
+            var deltaSeconds = Time.deltaTime;
+            update.Invoke(controller, null);
+            Assert.That(
+                controller.ElapsedSeconds,
+                Is.EqualTo(elapsedBeforeUpdate + deltaSeconds).Within(float.Epsilon));
+
             controller.ReportGoalReached();
             fixedUpdate.Invoke(controller, null);
 
