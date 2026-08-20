@@ -16,10 +16,10 @@
 
 # Unity YAML 직렬화 에셋 — 텍스트로 취급하되 자동 병합 시도는 안 함
 # (씬 소유권 분리 정책으로 대체하므로 merge 드라이버는 별도 설정하지 않음)
-*.unity text eol=lf -merge
-*.prefab text eol=lf -merge
-*.asset text eol=lf -merge
-*.meta text eol=lf -merge
+*.unity text eol=lf -merge whitespace=-trailing-space
+*.prefab text eol=lf -merge whitespace=-trailing-space
+*.asset text eol=lf -merge whitespace=-trailing-space
+*.meta text eol=lf -merge whitespace=-trailing-space
 *.mat text eol=lf -merge
 *.anim text eol=lf -merge
 *.controller text eol=lf -merge

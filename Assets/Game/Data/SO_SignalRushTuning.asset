@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b4bca2312aef4d1cb7817bd50498444, type: 3}
+  m_Name: SO_SignalRushTuning
+  m_EditorClassIdentifier: UPnL.SignalRush.Runtime::UPnL.SignalRush.Tuning.SignalRushTuning
+  _pixelsPerUnit: 32
+  _baseRunSpeed: 6
+  _maxRunSpeed: 10
+  _horizontalCorrectionSpeed: 3
+  _jumpVelocity: 8
+  _fallGravityMultiplier: 2
+  _attackWindowSeconds: 0.15
+  _hitLockSeconds: 0.25
+  _invulnerabilitySeconds: 1
+  _targetRunSeconds: 75
+  _respawnLockSeconds: 1
+  _projectileSpeed: 18
+  _spawnAheadChunkCount: 2
+  _maxChunkHeightDelta: 1.5
+  _maxChunkGap: 2
+  _sniperWarningSeconds: 0.8

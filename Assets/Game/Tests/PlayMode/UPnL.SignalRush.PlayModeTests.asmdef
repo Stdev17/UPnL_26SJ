@@ -1,0 +1,6 @@
+{
+  "name": "UPnL.SignalRush.PlayModeTests",
+  "rootNamespace": "UPnL.SignalRush.Tests",
+  "references": ["UPnL.SignalRush.Runtime"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}
