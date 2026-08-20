@@ -19,7 +19,7 @@ namespace UPnL.SignalRush.Player
             if (move != null)
             {
                 move.performed += HandleMove;
-                move.canceled += HandleMove;
+                move.canceled += HandleMoveCanceled;
                 move.Enable();
             }
 
@@ -40,11 +40,13 @@ namespace UPnL.SignalRush.Player
 
         private void OnDisable()
         {
+            _motor?.ClearMoveInput();
+
             var move = _move == null ? null : _move.action;
             if (move != null)
             {
                 move.performed -= HandleMove;
-                move.canceled -= HandleMove;
+                move.canceled -= HandleMoveCanceled;
                 move.Disable();
             }
 
@@ -77,6 +79,11 @@ namespace UPnL.SignalRush.Player
         private void HandleMove(InputAction.CallbackContext context)
         {
             _motor?.SetMoveInput(context.ReadValue<float>());
+        }
+
+        private void HandleMoveCanceled(InputAction.CallbackContext context)
+        {
+            _motor?.ClearMoveInput();
         }
 
         private void HandleJump(InputAction.CallbackContext context)

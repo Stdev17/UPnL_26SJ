@@ -80,6 +80,22 @@ namespace UPnL.SignalRush.Tests.Player
         }
 
         [Test]
+        public void ClearMoveInputRemovesCorrectionWhileControlIsLocked()
+        {
+            var fixture = CreateMotor();
+            fixture.motor.SetMoveInput(1f);
+            fixture.status.RequestRespawn();
+
+            fixture.motor.ClearMoveInput();
+            fixture.status.Tick(fixture.tuning.RespawnLockSeconds);
+            fixture.motor.Simulate(true, 0.02f);
+
+            Assert.That(fixture.body.linearVelocity.x, Is.EqualTo(fixture.tuning.BaseRunSpeed));
+
+            Destroy(fixture);
+        }
+
+        [Test]
         public void RespawnMovesBodyAndClearsVelocity()
         {
             var fixture = CreateMotor();

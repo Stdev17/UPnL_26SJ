@@ -35,6 +35,11 @@ namespace UPnL.SignalRush.Player
             _moveInput = Mathf.Clamp(horizontal, -1f, 1f);
         }
 
+        public void ClearMoveInput()
+        {
+            _moveInput = 0f;
+        }
+
         public void RequestJump()
         {
             if (IsControlLocked || !IsGrounded)
