@@ -28,7 +28,15 @@ namespace UPnL.SignalRush.World
 
         private void OnDestroy()
         {
+            var projectile = _activeProjectile;
             ReleaseProjectile();
+            if (projectile == null || projectile.IsResolved)
+                return;
+
+            if (Application.isPlaying)
+                Destroy(projectile.gameObject);
+            else
+                DestroyImmediate(projectile.gameObject);
         }
 
         public void ConfigurePlayerTarget(Transform playerTarget)

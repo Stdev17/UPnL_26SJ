@@ -85,6 +85,25 @@ namespace UPnL.SignalRush.Tests.World
         }
 
         [Test]
+        public void DestroyingSniperDestroysItsUnresolvedOwnedProjectile()
+        {
+            var fixture = CreateSniper();
+            Projectile spawned = null;
+            fixture.sniper.ProjectileSpawned += projectile => spawned = projectile;
+            fixture.sniper.TryActivate();
+            fixture.sniper.Tick(fixture.tuning.SniperWarningSeconds);
+
+            typeof(Sniper).GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(fixture.sniper, null);
+
+            var destroyed = spawned == null;
+            if (!destroyed)
+                Object.DestroyImmediate(spawned.gameObject);
+            Object.DestroyImmediate(fixture.root);
+            Object.DestroyImmediate(fixture.tuning);
+            Assert.That(destroyed, Is.True);
+        }
+
+        [Test]
         public void BeginRejectsMissingRolePrefabsAndLeavesSpawnerStopped()
         {
             var spawnerObject = new GameObject("Spawner");

@@ -6,8 +6,11 @@ using UPnL.SignalRush.World;
 
 namespace UPnL.SignalRush.Run
 {
+    [RequireComponent(typeof(Rigidbody2D))]
     public sealed class SignalRushPlayable : MonoBehaviour
     {
+        private const string PlacementError = "SignalRushPlayable must be attached to its assigned player GameObject.";
+
         [SerializeField] private RunController _runController;
         [SerializeField] private GoalTrigger _goalTrigger;
         [SerializeField] private PlayerStatus _playerStatus;
@@ -23,8 +26,17 @@ namespace UPnL.SignalRush.Run
         private PlayerState _lastPlayerState;
         private RunPhase _lastRunPhase;
 
+        private void Awake()
+        {
+            if (_player != null)
+                ValidatePlacement();
+        }
+
         private void OnEnable()
         {
+            if (!ValidatePlacement())
+                return;
+
             if (!_hasInitialPosition && _player != null)
             {
                 _initialPosition = _player.position;
@@ -53,9 +65,18 @@ namespace UPnL.SignalRush.Run
             {
                 _lastRunPhase = _runController.Phase;
                 _runController.PhaseChanged += HandleRunPhaseChanged;
+                _runController.RunFinished += HandleRunFinished;
             }
 
-            _chunkSpawner?.Begin();
+            if (_runController != null && _runController.Phase == RunPhase.Finished)
+            {
+                _playerCombat?.Interrupt();
+                _playerMotor?.SetSimulationPaused(true);
+            }
+            else
+            {
+                _chunkSpawner?.Begin();
+            }
         }
 
         private void Update()
@@ -75,7 +96,10 @@ namespace UPnL.SignalRush.Run
             if (_playerCombat != null)
                 _playerCombat.ObstacleBroken -= HandleObstacleBroken;
             if (_runController != null)
+            {
                 _runController.PhaseChanged -= HandleRunPhaseChanged;
+                _runController.RunFinished -= HandleRunFinished;
+            }
 
             _chunkSpawner?.Stop();
         }
@@ -122,11 +146,15 @@ namespace UPnL.SignalRush.Run
             if (state == PlayerState.Respawning)
             {
                 _runController?.BeginRespawn();
-                if (_playerMotor != null)
-                    _playerMotor.Respawn(_playerMotor.SafePosition);
+                _playerMotor?.SetSimulationPaused(true);
             }
             else if (state == PlayerState.Active && previous == PlayerState.Respawning)
             {
+                if (_playerMotor != null)
+                {
+                    _playerMotor.Respawn(_playerMotor.SafePosition);
+                    _playerMotor.SetSimulationPaused(false);
+                }
                 _runController?.EndRespawn();
             }
             else if (state == PlayerState.Dead)
@@ -146,18 +174,32 @@ namespace UPnL.SignalRush.Run
             var previous = _lastRunPhase;
             _lastRunPhase = phase;
 
-            if (phase == RunPhase.Finished)
-            {
-                _chunkSpawner?.Stop();
-            }
-            else if (phase == RunPhase.Running && previous == RunPhase.Finished)
+            if (phase == RunPhase.Running && previous == RunPhase.Finished)
             {
                 _playerStatus?.ResetStatus();
                 _comboCounter?.Reset();
                 if (_hasInitialPosition)
                     _playerMotor?.Respawn(_initialPosition);
+                _playerMotor?.SetSimulationPaused(false);
                 _chunkSpawner?.Begin();
             }
+        }
+
+        private void HandleRunFinished(RunResult result)
+        {
+            _playerCombat?.Interrupt();
+            _playerMotor?.SetSimulationPaused(true);
+            _chunkSpawner?.Stop();
+        }
+
+        private bool ValidatePlacement()
+        {
+            if (_player != null && _player.gameObject == gameObject)
+                return true;
+
+            Debug.LogError(PlacementError, this);
+            enabled = false;
+            return false;
         }
     }
 }

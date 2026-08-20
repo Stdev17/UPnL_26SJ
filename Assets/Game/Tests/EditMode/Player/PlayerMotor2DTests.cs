@@ -110,6 +110,29 @@ namespace UPnL.SignalRush.Tests.Player
         }
 
         [Test]
+        public void PausedSimulationCannotAdvanceOrOverwriteSafePosition()
+        {
+            var fixture = CreateMotor();
+            fixture.body.position = new Vector2(7f, 2f);
+            fixture.motor.Simulate(true, 0.02f);
+            fixture.motor.SetSimulationPaused(true);
+            fixture.body.position = new Vector2(20f, -5f);
+            fixture.body.linearVelocity = new Vector2(4f, -3f);
+
+            fixture.motor.Simulate(true, 0.02f);
+
+            Assert.That(fixture.body.simulated, Is.False);
+            Assert.That(fixture.motor.Position, Is.EqualTo(new Vector2(20f, -5f)));
+            Assert.That(fixture.motor.SafePosition, Is.EqualTo(new Vector2(7f, 2f)));
+            Assert.That(fixture.body.linearVelocity, Is.EqualTo(new Vector2(4f, -3f)));
+
+            fixture.motor.SetSimulationPaused(false);
+
+            Assert.That(fixture.body.simulated, Is.True);
+            Destroy(fixture);
+        }
+
+        [Test]
         public void FallingAddsTheConfiguredExtraGravity()
         {
             var fixture = CreateMotor();

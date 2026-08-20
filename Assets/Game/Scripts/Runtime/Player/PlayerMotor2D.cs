@@ -60,11 +60,20 @@ namespace UPnL.SignalRush.Player
         {
             _body.linearVelocity = Vector2.zero;
             _body.position = position;
+            transform.position = position;
             SafePosition = position;
+        }
+
+        public void SetSimulationPaused(bool paused)
+        {
+            _body.simulated = !paused;
         }
 
         public void Simulate(bool grounded, float deltaTime)
         {
+            if (!_body.simulated)
+                return;
+
             grounded &= _body.linearVelocity.y <= 0f;
             SetGrounded(grounded);
             if (grounded)

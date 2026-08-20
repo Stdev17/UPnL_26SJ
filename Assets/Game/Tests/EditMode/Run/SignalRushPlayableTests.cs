@@ -3,6 +3,7 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UPnL.SignalRush.Combat;
 using UPnL.SignalRush.Combo;
 using UPnL.SignalRush.Player;
@@ -51,11 +52,14 @@ namespace UPnL.SignalRush.Tests.Run
             fixture.status.RequestRespawn();
 
             Assert.That(fixture.run.Phase, Is.EqualTo(RunPhase.Respawning));
-            Assert.That(fixture.motor.Position, Is.EqualTo(new Vector2(8f, 2f)));
+            Assert.That(fixture.motor.Position, Is.EqualTo(new Vector2(20f, -10f)));
+            Assert.That(fixture.body.simulated, Is.False);
 
             fixture.status.Tick(fixture.tuning.RespawnLockSeconds);
 
             Assert.That(fixture.run.Phase, Is.EqualTo(RunPhase.Running));
+            Assert.That(fixture.motor.Position, Is.EqualTo(new Vector2(8f, 2f)));
+            Assert.That(fixture.body.simulated, Is.True);
             Destroy(fixture);
         }
 
@@ -164,6 +168,66 @@ namespace UPnL.SignalRush.Tests.Run
             Assert.That(fixture.combo.Current, Is.EqualTo(1));
             Assert.That(fixture.combo.Best, Is.EqualTo(1));
             Destroy(fixture);
+        }
+
+        [Test]
+        public void GoalFinishInterruptsCombatAndPausesMotorUntilRestart()
+        {
+            var fixture = CreatePlayable(true);
+            fixture.combat.RequestAttack();
+            fixture.combat.RequestAttack();
+
+            fixture.goal.TryReach();
+            fixture.run.ResolveFixedStep();
+
+            Assert.That(fixture.combat.IsAttacking, Is.False);
+            Assert.That(fixture.body.simulated, Is.False);
+            Assert.That(fixture.spawner.SpawnNext(), Is.Null);
+
+            fixture.run.Restart();
+            fixture.combat.Tick(fixture.tuning.AttackWindowSeconds);
+
+            Assert.That(fixture.combat.IsAttacking, Is.False);
+            Assert.That(fixture.body.simulated, Is.True);
+            Destroy(fixture);
+        }
+
+        [Test]
+        public void ReenableWhileFinishedLeavesSpawnerStoppedUntilRestart()
+        {
+            var fixture = CreatePlayable(true);
+            fixture.goal.TryReach();
+            fixture.run.ResolveFixedStep();
+
+            Invoke(fixture.bridge, "OnDisable");
+            Invoke(fixture.bridge, "OnEnable");
+
+            Assert.That(fixture.spawner.SpawnNext(), Is.Null);
+
+            fixture.run.Restart();
+
+            Assert.That(fixture.spawner.SpawnNext(), Is.Not.Null);
+            Destroy(fixture);
+        }
+
+        [Test]
+        public void BridgeRequiresPlayerBodyAndDisablesItselfWhenPlacedElsewhere()
+        {
+            var root = new GameObject("BridgeRoot");
+            root.SetActive(false);
+            var player = new GameObject("Player");
+            var bridge = root.AddComponent<SignalRushPlayable>();
+            SetReference(bridge, "_player", player.transform);
+            LogAssert.Expect(LogType.Error, "SignalRushPlayable must be attached to its assigned player GameObject.");
+
+            root.SetActive(true);
+            Invoke(bridge, "OnEnable");
+
+            Assert.That(root.GetComponent<Rigidbody2D>(), Is.Not.Null);
+            Assert.That(bridge.enabled, Is.False);
+            LogAssert.NoUnexpectedReceived();
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(player);
         }
 
         [Test]
