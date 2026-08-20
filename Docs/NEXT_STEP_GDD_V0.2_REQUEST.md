@@ -35,6 +35,26 @@ Unity 프로젝트 기반 세팅 다음에는 gameplay 계약이 필요합니다
 
 공격 판정 시간 중 들어온 추가 공격 입력을 무시할지, 다음 공격으로 buffering할지도 결정해 주세요.
 
+| From | Trigger | Guard | To/overlay | 허용 입력 | 종료 조건 |
+|---|---|---|---|---|---|
+| Run | Jump 입력 | 접지 상태, Hit/Dead 아님 | Jump | Move, Attack | 착지 → Run; 피해 → Hit/Dead |
+| Run | Attack 입력 | 공격 중 아님, Hit/Dead 아님 | Attack overlay on Run | Move, Jump, Attack | 공격 판정/애니메이션 종료 → Run |
+| Run | 피해 요청 | 무적 아님, 체력 > 1 | Hit | 없음 | 경직/무적 시간 종료 → Run |
+| Run | 치명 피해 또는 즉사 낙사 | 체력 ≤ 0 또는 Q3이 즉사 | Dead | Restart만 | Restart → Run |
+| Jump | Attack 입력 | 공격 중 아님, Hit/Dead 아님 | Attack overlay on Jump | Move, Attack | 공격 판정/애니메이션 종료 → Jump |
+| Jump | 착지 | 지면 감지 | Run | Move, Jump, Attack | 피해 → Hit/Dead |
+| Jump | 피해 요청 | 무적 아님, 체력 > 1 | Hit | 없음 | 경직/무적 시간 종료 → Run |
+| Jump | 치명 피해 또는 즉사 낙사 | 체력 ≤ 0 또는 Q3이 즉사 | Dead | Restart만 | Restart → Run |
+| Attack | Attack 입력 | 공격 중이고 buffer가 비어 있음 | 다음 Attack 1회 buffer | Move/Jump는 기반 상태에 따름 | 현재 공격 종료 후 buffered Attack 시작; 없으면 기반 상태(Run/Jump) 복귀 |
+| Attack | 피해 요청 | 무적 아님, 체력 > 1 | Hit | 없음 | 경직/무적 시간 종료 → Run |
+| Attack | 치명 피해 또는 즉사 낙사 | 체력 ≤ 0 또는 Q3이 즉사 | Dead | Restart만 | Restart → Run |
+| Hit | 경직 종료 | 생존 | Run | 없음 | Run 진입 후 Move, Jump, Attack 허용 |
+| Hit | 치명 피해 | 체력 ≤ 0 | Dead | Restart만 | Restart → Run |
+| Dead | Restart 입력 | 재시작 가능 | Run | Restart만 | 플레이어·런 상태 초기화 완료 |
+
+Attack은 배타 상태가 아니라 Run 또는 Jump 위에서 동작하는 overlay
+Hit 종료 시 접지 상태면 Run, 공중이면 Jump로 복귀한다. Hit/Dead 진입 시 공격 buffer는 폐기한다.
+
 ## 3. 입력 binding 확정
 
 GDD에서 다른 승인 액션을 추가하지 않는 한 runtime action은 `Move`, `Jump`, `Attack`, `Restart`만 둡니다.
@@ -45,6 +65,7 @@ GDD에서 다른 승인 액션을 추가하지 않는 한 runtime action은 `Mov
 | Jump |  |  |  |
 | Attack |  |  |  |
 | Restart |  |  |  |
+키는 나중에 정하도록 하겠습니다. 
 
 ## 4. 타입 책임과 공개 계약 확정
 
