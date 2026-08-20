@@ -4,7 +4,25 @@
 
 이 리포는 **조건부로 안전하다**. Git worktree를 사용할 수 있고 Unity의 `Library`·`Temp`·`Logs`는 이미 무시되어 각 worktree가 자체 임포트 캐시를 갖는다. 또한 scene, prefab, asset, meta 파일은 자동 병합하지 않도록 설정되어 있다.
 
-다만 현재 프로젝트 내부 `.worktrees/`는 Git ignore 대상이 아니다. worktree는 반드시 리포 밖의 형제 디렉터리 `../UPnL_26SJ-worktrees/`에 만들거나, 그 전에 `.worktrees/`를 ignore 규칙에 추가한다.
+Codex 자동 작업은 리포 내부의 ignore된 `.worktrees/`만 사용한다. 이 위치는 프로젝트의 허용된 쓰기 루트 안에 있어 파일 수정과 검증을 추가 권한 요청 없이 재현할 수 있다. 리포 밖의 형제 디렉터리는 현재 권한 모델에서 사용하지 않는다.
+
+## Codex 자동 실행 계약
+
+사용자는 이 리포에서 아래 조건을 만족하는 Codex 작업에 대해 `.worktrees/` 생성과 정리를 매번 다시 확인하지 않아도 된다고 승인했다.
+
+1. 승인된 문서나 구현 계획에서 하나의 좁은 task scope를 정하고 `agent/<scope>` branch와 `.worktrees/<scope>`를 만든다.
+2. worktree를 만들기 전에 `.worktrees/`가 Git ignore 대상인지, 같은 branch/path가 없는지, main의 기존 변경이 다른 작업 소유가 아닌지 확인한다.
+3. 작업 파일과 검증 명령은 아래 작업 계약에 기록하고 그 범위만 수정한다.
+4. worktree에서 필요한 테스트와 `git diff --check`가 모두 성공해야 커밋한다.
+5. 분기 이후 main이 바뀌지 않았고 main worktree가 깨끗할 때만 `git merge --ff-only agent/<scope>`로 자동 반영한다.
+6. main에서 같은 검증을 다시 통과한 뒤에만 worktree와 task branch를 일반 삭제한다.
+
+다음 경우에는 자동 진행을 멈추고 사용자에게 보고한다.
+
+- main이 분기 이후 변경되어 fast-forward할 수 없다.
+- 다른 작업이 같은 `.unity`, `.prefab`, `.asset`, `.meta`, `.inputactions`, package 또는 `ProjectSettings` 파일을 소유한다.
+- 테스트 실패, Unity licensing 문제, merge 충돌 또는 보존되지 않은 변경이 있다.
+- `pull`, `push`, 강제 삭제, rebase, reset처럼 이 계약에 포함되지 않은 Git 작업이 필요하다.
 
 ## 역할
 
@@ -20,7 +38,6 @@
 
 ```bash
 git switch main
-git pull --ff-only
 git status --short
 git worktree list
 ```
@@ -29,12 +46,13 @@ git worktree list
 
 ## 작업 worktree 만들기
 
-브랜치명과 폴더명은 `agent/<짧은-범위>`와 `<짧은-범위>`를 사용한다. 예: `agent/combo-rules`.
+브랜치명과 폴더명은 `agent/<짧은-범위>`와 `.worktrees/<짧은-범위>`를 사용한다. 예: `agent/combo-rules`.
 
 ```bash
-mkdir -p ../UPnL_26SJ-worktrees
-git worktree add -b agent/combo-rules ../UPnL_26SJ-worktrees/combo-rules main
-git -C ../UPnL_26SJ-worktrees/combo-rules status --short
+git check-ignore -q .worktrees
+mkdir -p .worktrees
+git worktree add -b agent/combo-rules .worktrees/combo-rules main
+git -C .worktrees/combo-rules status --short
 ```
 
 새 worktree는 main에서 분기한 깨끗한 상태여야 한다. Unity Editor는 해당 worktree 경로를 별도 프로젝트로 열어야 하며, 다른 worktree의 `Library`를 복사하거나 공유하지 않는다.
@@ -44,7 +62,7 @@ git -C ../UPnL_26SJ-worktrees/combo-rules status --short
 작업을 지시할 때 아래 다섯 항목을 함께 준다.
 
 ```text
-Worktree: ../UPnL_26SJ-worktrees/<scope>
+Worktree: .worktrees/<scope>
 Branch: agent/<scope>
 목표: 한 문장
 소유 파일/폴더: 정확한 경로
@@ -82,8 +100,8 @@ Unity YAML은 자동 병합을 하지 않는다. 충돌이 나면 통합 담당�
 작업 에이전트는 자기 worktree에서 최소 검증을 마친다.
 
 ```bash
-git -C ../UPnL_26SJ-worktrees/combo-rules diff --check
-git -C ../UPnL_26SJ-worktrees/combo-rules status --short
+git -C .worktrees/combo-rules diff --check
+git -C .worktrees/combo-rules status --short
 ```
 
 Unity 코드 또는 asset 변경이면 해당 worktree를 대상으로 Unity Test Runner 또는 batchmode compile도 실행한다. 검증이 실패하면 커밋이나 통합 전에 원인을 기록하고 해결한다.
@@ -91,16 +109,15 @@ Unity 코드 또는 asset 변경이면 해당 worktree를 대상으로 Unity Tes
 작업 완료 후에는 작업 branch에만 필요한 파일을 명시적으로 커밋한다.
 
 ```bash
-git -C ../UPnL_26SJ-worktrees/combo-rules add Assets/Game/Scripts/Runtime/Combo
-git -C ../UPnL_26SJ-worktrees/combo-rules commit -m "feat: add combo rules"
+git -C .worktrees/combo-rules add Assets/Game/Scripts/Runtime/Combo
+git -C .worktrees/combo-rules commit -m "feat: add combo rules"
 ```
 
 통합 담당자는 main에서 한 branch씩 통합하고 매번 검증한다.
 
 ```bash
 git switch main
-git pull --ff-only
-git merge --no-ff agent/combo-rules
+git merge --ff-only agent/combo-rules
 git diff --check
 ```
 
@@ -111,7 +128,7 @@ Unity 변경이면 merge 직후 main에서 Unity 검증을 다시 실행한다. 
 통합이 끝난 뒤에만 worktree와 branch를 제거한다.
 
 ```bash
-git worktree remove ../UPnL_26SJ-worktrees/combo-rules
+git worktree remove .worktrees/combo-rules
 git branch -d agent/combo-rules
 git worktree prune
 ```
@@ -125,4 +142,5 @@ git worktree prune
 - 공유 Unity YAML과 package 설정은 동시에 편집하지 않는다.
 - 모든 merge 전에 `git diff --check`를 실행한다.
 - Unity 검증은 변경이 발생한 worktree와 merge된 main에서 각각 실행한다.
-- worktree는 리포 밖 `../UPnL_26SJ-worktrees/`에만 생성한다.
+- Codex worktree는 ignore된 `.worktrees/` 아래에만 생성한다.
+- 자동 통합은 main이 분기 이후 바뀌지 않은 fast-forward인 경우에만 수행한다.
