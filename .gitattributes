@@ -8,6 +8,8 @@
 *.cginc text eol=lf
 *.compute text eol=lf
 *.json text eol=lf
+*.asmdef text eol=lf
+*.inputactions text eol=lf
 *.xml text eol=lf
 *.txt text eol=lf
 *.md text eol=lf
