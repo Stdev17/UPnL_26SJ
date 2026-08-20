@@ -1,0 +1,5 @@
+{
+  "name": "UPnL.SignalRush.Runtime",
+  "rootNamespace": "UPnL.SignalRush",
+  "autoReferenced": true
+}
