@@ -1,3 +1,4 @@
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UPnL.SignalRush.Combat;
@@ -63,6 +64,38 @@ namespace UPnL.SignalRush.Tests.Combat
             Assert.That(hitCount, Is.Zero);
             Assert.That(parryCount, Is.EqualTo(1));
 
+            Object.DestroyImmediate(targetObject);
+        }
+
+        [Test]
+        public void TryResolveMissedResolvesOnceAndEmitsMissedOnce()
+        {
+            var targetObject = new GameObject();
+            var target = targetObject.AddComponent<Projectile>();
+            var missedCount = 0;
+            target.Missed += projectile => missedCount++;
+
+            Assert.That(target.TryResolveMissed(), Is.True);
+            Assert.That(target.TryResolveMissed(), Is.False);
+            Assert.That(target.TryParry(), Is.False);
+            Assert.That(target.IsResolved, Is.True);
+            Assert.That(missedCount, Is.EqualTo(1));
+
+            Object.DestroyImmediate(targetObject);
+        }
+
+        [Test]
+        public void BecomingInvisibleResolvesProjectileAsMissed()
+        {
+            var targetObject = new GameObject();
+            var target = targetObject.AddComponent<Projectile>();
+            var missedCount = 0;
+            target.Missed += projectile => missedCount++;
+
+            typeof(Projectile).GetMethod("OnBecameInvisible", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(target, null);
+
+            Assert.That(target.IsResolved, Is.True);
+            Assert.That(missedCount, Is.EqualTo(1));
             Object.DestroyImmediate(targetObject);
         }
     }

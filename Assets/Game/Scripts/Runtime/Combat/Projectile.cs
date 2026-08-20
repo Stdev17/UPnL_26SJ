@@ -8,6 +8,12 @@ namespace UPnL.SignalRush.Combat
         public bool IsResolved { get; private set; }
         public event Action<Projectile> HitPlayer;
         public event Action<Projectile> Parried;
+        public event Action<Projectile> Missed;
+
+        private void OnBecameInvisible()
+        {
+            TryResolveMissed();
+        }
 
         public bool TryHitPlayer()
         {
@@ -17,6 +23,11 @@ namespace UPnL.SignalRush.Combat
         public bool TryParry()
         {
             return TryResolve(Parried);
+        }
+
+        public bool TryResolveMissed()
+        {
+            return TryResolve(Missed);
         }
 
         private bool TryResolve(Action<Projectile> resolved)

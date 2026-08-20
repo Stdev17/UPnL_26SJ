@@ -68,6 +68,7 @@ namespace UPnL.SignalRush.World
             _activeProjectile.GetComponent<Rigidbody2D>().linearVelocity = direction * _tuning.ProjectileSpeed;
             _activeProjectile.HitPlayer += HandleProjectileResolved;
             _activeProjectile.Parried += HandleProjectileResolved;
+            _activeProjectile.Missed += HandleProjectileResolved;
             ProjectileSpawned?.Invoke(_activeProjectile);
         }
 
@@ -83,6 +84,7 @@ namespace UPnL.SignalRush.World
             {
                 _activeProjectile.HitPlayer -= HandleProjectileResolved;
                 _activeProjectile.Parried -= HandleProjectileResolved;
+                _activeProjectile.Missed -= HandleProjectileResolved;
             }
 
             _activeProjectile = null;

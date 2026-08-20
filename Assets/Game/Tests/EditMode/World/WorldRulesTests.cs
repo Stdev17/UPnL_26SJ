@@ -1,3 +1,4 @@
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -68,6 +69,22 @@ namespace UPnL.SignalRush.Tests.World
         }
 
         [Test]
+        public void MissedProjectileImmediatelyClearsSniperOwnership()
+        {
+            var fixture = CreateSniper();
+            Projectile spawned = null;
+            fixture.sniper.ProjectileSpawned += projectile => spawned = projectile;
+            fixture.sniper.TryActivate();
+            fixture.sniper.Tick(fixture.tuning.SniperWarningSeconds);
+
+            spawned.TryResolveMissed();
+
+            var activeProjectile = typeof(Sniper).GetField("_activeProjectile", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(activeProjectile.GetValue(fixture.sniper), Is.Null);
+            Destroy(fixture, spawned);
+        }
+
+        [Test]
         public void BeginRejectsMissingRolePrefabsAndLeavesSpawnerStopped()
         {
             var spawnerObject = new GameObject("Spawner");
@@ -111,6 +128,78 @@ namespace UPnL.SignalRush.Tests.World
             }
         }
 
+        [Test]
+        public void SpawningSniperRearActivatesItsOwnedSniper()
+        {
+            var fixture = CreateSpawner();
+            fixture.spawner.Begin();
+            fixture.spawner.SpawnNext();
+            fixture.spawner.SpawnNext();
+
+            var rear = fixture.spawner.SpawnNext();
+
+            Assert.That(rear.GetComponent<Sniper>().IsTargetting, Is.True);
+            Destroy(fixture);
+        }
+
+        [Test]
+        public void TickCleansBehindChunksOnlyAfterTheirSniperLifetimeEnds()
+        {
+            var fixture = CreateSpawner();
+            fixture.spawner.Begin();
+            var gameplay = fixture.spawner.SpawnNext();
+            var decor = fixture.spawner.SpawnNext();
+            var rear = fixture.spawner.SpawnNext();
+            var sniper = rear.GetComponent<Sniper>();
+            Projectile projectile = null;
+            sniper.ProjectileSpawned += spawned => projectile = spawned;
+            fixture.player.position = new Vector2(100f, 0f);
+
+            fixture.spawner.Tick();
+
+            Assert.That(gameplay == null, Is.True);
+            Assert.That(decor == null, Is.True);
+            Assert.That(rear == null, Is.False);
+
+            sniper.Tick(fixture.tuning.SniperWarningSeconds);
+            projectile.TryResolveMissed();
+            fixture.spawner.Tick();
+
+            Assert.That(rear == null, Is.True);
+            if (projectile != null)
+                Object.DestroyImmediate(projectile.gameObject);
+            Destroy(fixture);
+        }
+
+        [Test]
+        public void StopDestroysTrackedChunks()
+        {
+            var fixture = CreateSpawner();
+            fixture.spawner.Begin();
+            var spawned = fixture.spawner.SpawnNext();
+
+            fixture.spawner.Stop();
+
+            Assert.That(spawned == null, Is.True);
+            Destroy(fixture);
+        }
+
+        [Test]
+        public void BeginDestroysPriorChunksAndResetsRoundRobin()
+        {
+            var fixture = CreateSpawner();
+            fixture.spawner.Begin();
+            var prior = fixture.spawner.SpawnNext();
+            fixture.spawner.SpawnNext();
+
+            fixture.spawner.Begin();
+            var next = fixture.spawner.SpawnNext();
+
+            Assert.That(prior == null, Is.True);
+            Assert.That(next.Role, Is.EqualTo(ChunkRole.GameplayFront));
+            Destroy(fixture);
+        }
+
         private static (Sniper sniper, Transform player, SignalRushTuning tuning, Projectile projectilePrefab, GameObject root) CreateSniper()
         {
             var root = new GameObject("SniperFixture");
@@ -132,7 +221,7 @@ namespace UPnL.SignalRush.Tests.World
             return (sniper, player, tuning, projectilePrefab, root);
         }
 
-        private static (ChunkSpawner spawner, SignalRushTuning tuning, GameObject root, GameObject[] prefabs) CreateSpawner()
+        private static (ChunkSpawner spawner, SignalRushTuning tuning, Transform player, GameObject root, GameObject[] prefabs) CreateSpawner()
         {
             var root = new GameObject("SpawnerFixture");
             var spawner = root.AddComponent<ChunkSpawner>();
@@ -152,6 +241,7 @@ namespace UPnL.SignalRush.Tests.World
                 CreateChunkPrefab("Decor", root.transform),
                 CreateChunkPrefab("Sniper", root.transform)
             };
+            ConfigureSniperChunk(prefabs[3], player, tuning, root.transform);
             var serialized = new SerializedObject(spawner);
             serialized.FindProperty("_tuning").objectReferenceValue = tuning;
             serialized.FindProperty("_origin").objectReferenceValue = origin;
@@ -160,7 +250,23 @@ namespace UPnL.SignalRush.Tests.World
             SetArray(serialized.FindProperty("_decorFrontPrefabs"), prefabs[2].GetComponent<Chunk>());
             SetArray(serialized.FindProperty("_sniperRearPrefabs"), prefabs[3].GetComponent<Chunk>());
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            return (spawner, tuning, root, prefabs);
+            return (spawner, tuning, player, root, prefabs);
+        }
+
+        private static void ConfigureSniperChunk(GameObject chunkObject, Transform player, SignalRushTuning tuning, Transform fixtureRoot)
+        {
+            var sniper = chunkObject.AddComponent<Sniper>();
+            var muzzle = new GameObject("Muzzle").transform;
+            muzzle.SetParent(chunkObject.transform);
+            var projectileObject = new GameObject("ProjectilePrefab");
+            projectileObject.transform.SetParent(fixtureRoot);
+            projectileObject.AddComponent<Rigidbody2D>();
+            var projectile = projectileObject.AddComponent<Projectile>();
+            SetObjectReference(sniper, "_tuning", tuning);
+            SetObjectReference(sniper, "_playerTarget", player);
+            SetObjectReference(sniper, "_muzzle", muzzle);
+            SetObjectReference(sniper, "_projectilePrefab", projectile);
+            SetObjectReference(chunkObject.GetComponent<Chunk>(), "_sniper", sniper);
         }
 
         private static GameObject CreateChunkPrefab(string name, Transform parent)
@@ -193,7 +299,7 @@ namespace UPnL.SignalRush.Tests.World
             Object.DestroyImmediate(fixture.tuning);
         }
 
-        private static void Destroy((ChunkSpawner spawner, SignalRushTuning tuning, GameObject root, GameObject[] prefabs) fixture)
+        private static void Destroy((ChunkSpawner spawner, SignalRushTuning tuning, Transform player, GameObject root, GameObject[] prefabs) fixture)
         {
             for (var i = fixture.root.transform.childCount - 1; i >= 0; i--)
                 Object.DestroyImmediate(fixture.root.transform.GetChild(i).gameObject);

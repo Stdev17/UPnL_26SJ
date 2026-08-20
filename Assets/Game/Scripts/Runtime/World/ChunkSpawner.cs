@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UPnL.SignalRush.Tuning;
 
@@ -21,18 +22,19 @@ namespace UPnL.SignalRush.World
         private int _nextDecor;
         private int _nextSniper;
         private Vector2 _lastGameplayPosition;
+        private readonly List<Chunk> _spawned = new List<Chunk>();
 
         private void Update()
         {
-            if (_isRunning && _lastGameplayPosition.x < _player.position.x + MaxGameplayGap * _tuning.SpawnAheadChunkCount)
-                SpawnNext();
+            Tick();
         }
 
         public void Begin()
         {
+            _isRunning = false;
+            ClearSpawned();
             if (!HasValidConfiguration())
             {
-                _isRunning = false;
                 Debug.LogError(ConfigurationError, this);
                 return;
             }
@@ -48,6 +50,17 @@ namespace UPnL.SignalRush.World
         public void Stop()
         {
             _isRunning = false;
+            ClearSpawned();
+        }
+
+        public void Tick()
+        {
+            if (!_isRunning)
+                return;
+
+            CleanupBehindPlayer();
+            if (_lastGameplayPosition.x < _player.position.x + MaxGameplayGap * _tuning.SpawnAheadChunkCount)
+                SpawnNext();
         }
 
         public Chunk SpawnNext()
@@ -61,6 +74,9 @@ namespace UPnL.SignalRush.World
             var slot = NextSlot(role);
             var chunk = Instantiate(prefab, slot.Position, Quaternion.identity, transform);
             chunk.Place(slot);
+            if (role == ChunkRole.SniperRear)
+                chunk.TryActivateSniper();
+            _spawned.Add(chunk);
             return chunk;
         }
 
@@ -115,6 +131,44 @@ namespace UPnL.SignalRush.World
                 JumpReachability.MaxHeight(_tuning.JumpVelocity, Physics2D.gravity.magnitude) - 0.25f));
             _lastGameplayPosition += new Vector2(MaxGameplayGap, maxHeight);
             return new ChunkSlot(role, _lastGameplayPosition);
+        }
+
+        private void CleanupBehindPlayer()
+        {
+            for (var i = _spawned.Count - 1; i >= 0; i--)
+            {
+                var chunk = _spawned[i];
+                if (chunk == null)
+                {
+                    _spawned.RemoveAt(i);
+                    continue;
+                }
+
+                if (chunk.transform.position.x < _player.position.x && chunk.CanDespawn)
+                {
+                    _spawned.RemoveAt(i);
+                    DestroyChunk(chunk);
+                }
+            }
+        }
+
+        private void ClearSpawned()
+        {
+            for (var i = 0; i < _spawned.Count; i++)
+            {
+                if (_spawned[i] != null)
+                    DestroyChunk(_spawned[i]);
+            }
+
+            _spawned.Clear();
+        }
+
+        private static void DestroyChunk(Chunk chunk)
+        {
+            if (Application.isPlaying)
+                Destroy(chunk.gameObject);
+            else
+                DestroyImmediate(chunk.gameObject);
         }
     }
 }
