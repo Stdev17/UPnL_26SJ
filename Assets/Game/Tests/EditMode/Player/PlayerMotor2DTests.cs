@@ -46,7 +46,7 @@ namespace UPnL.SignalRush.Tests.Player
         }
 
         [Test]
-        public void MovementClampsCorrectionAndSpeedMultiplierToTheirMinimums()
+        public void MovementClampsCorrectionAndSpeedMultiplierBounds()
         {
             var fixture = CreateMotor();
 
@@ -55,6 +55,26 @@ namespace UPnL.SignalRush.Tests.Player
             fixture.motor.Simulate(true, 0.02f);
 
             Assert.That(fixture.body.linearVelocity.x, Is.EqualTo(fixture.tuning.BaseRunSpeed + fixture.tuning.HorizontalCorrectionSpeed));
+
+            fixture.motor.SetMoveInput(0f);
+            fixture.motor.SetSpeedMultiplier(999f);
+            fixture.motor.Simulate(true, 0.02f);
+
+            Assert.That(fixture.body.linearVelocity.x, Is.EqualTo(fixture.tuning.MaxRunSpeed));
+
+            Destroy(fixture);
+        }
+
+        [Test]
+        public void LockedControlRemovesCorrectionThatWasHeldBeforeTheLock()
+        {
+            var fixture = CreateMotor();
+            fixture.motor.SetMoveInput(1f);
+            fixture.status.RequestRespawn();
+
+            fixture.motor.Simulate(true, 0.02f);
+
+            Assert.That(fixture.body.linearVelocity.x, Is.EqualTo(fixture.tuning.BaseRunSpeed));
 
             Destroy(fixture);
         }

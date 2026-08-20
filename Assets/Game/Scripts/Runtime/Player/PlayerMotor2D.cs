@@ -48,7 +48,7 @@ namespace UPnL.SignalRush.Player
 
         public void SetSpeedMultiplier(float multiplier)
         {
-            _speedMultiplier = Mathf.Max(1f, multiplier);
+            _speedMultiplier = Mathf.Clamp(multiplier, 1f, _tuning.MaxRunSpeed / _tuning.BaseRunSpeed);
         }
 
         public void Respawn(Vector2 position)
@@ -66,7 +66,8 @@ namespace UPnL.SignalRush.Player
                 SafePosition = _body.position;
 
             var velocity = _body.linearVelocity;
-            velocity.x = _tuning.BaseRunSpeed * _speedMultiplier + _moveInput * _tuning.HorizontalCorrectionSpeed;
+            var correction = IsControlLocked ? 0f : _moveInput;
+            velocity.x = _tuning.BaseRunSpeed * _speedMultiplier + correction * _tuning.HorizontalCorrectionSpeed;
             if (velocity.y < 0f && deltaTime > 0f)
                 velocity.y += Physics2D.gravity.y * (_tuning.FallGravityMultiplier - 1f) * deltaTime;
             _body.linearVelocity = velocity;

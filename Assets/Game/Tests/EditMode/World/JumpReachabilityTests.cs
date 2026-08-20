@@ -13,10 +13,10 @@ namespace UPnL.SignalRush.Tests.World
         }
 
         [Test]
-        public void AirTimeAndMaxGapUseTheSameBallisticModel()
+        public void AirTimeAndMaxGapIncludeFasterFalling()
         {
-            Assert.That(JumpReachability.AirTime(8f, 10f), Is.EqualTo(1.6f).Within(0.0001f));
-            Assert.That(JumpReachability.MaxGap(5f, 8f, 10f), Is.EqualTo(8f).Within(0.0001f));
+            Assert.That(JumpReachability.AirTime(8f, 10f, 2f), Is.EqualTo(1.365685f).Within(0.0001f));
+            Assert.That(JumpReachability.MaxGap(5f, 8f, 10f, 2f), Is.EqualTo(6.828427f).Within(0.0001f));
         }
 
         [TestCase(0f, 10f)]
@@ -26,15 +26,22 @@ namespace UPnL.SignalRush.Tests.World
         public void NonPositiveBallisticInputsAreUnreachable(float jumpVelocity, float gravity)
         {
             Assert.That(JumpReachability.MaxHeight(jumpVelocity, gravity), Is.Zero);
-            Assert.That(JumpReachability.AirTime(jumpVelocity, gravity), Is.Zero);
-            Assert.That(JumpReachability.MaxGap(5f, jumpVelocity, gravity), Is.Zero);
+            Assert.That(JumpReachability.AirTime(jumpVelocity, gravity, 2f), Is.Zero);
+            Assert.That(JumpReachability.MaxGap(5f, jumpVelocity, gravity, 2f), Is.Zero);
         }
 
         [Test]
         public void NonPositiveHorizontalSpeedHasNoGap()
         {
-            Assert.That(JumpReachability.MaxGap(0f, 8f, 10f), Is.Zero);
-            Assert.That(JumpReachability.MaxGap(-5f, 8f, 10f), Is.Zero);
+            Assert.That(JumpReachability.MaxGap(0f, 8f, 10f, 2f), Is.Zero);
+            Assert.That(JumpReachability.MaxGap(-5f, 8f, 10f, 2f), Is.Zero);
+        }
+
+        [Test]
+        public void NonPositiveFallMultiplierHasNoAirTimeOrGap()
+        {
+            Assert.That(JumpReachability.AirTime(8f, 10f, 0f), Is.Zero);
+            Assert.That(JumpReachability.MaxGap(5f, 8f, 10f, -1f), Is.Zero);
         }
     }
 }
