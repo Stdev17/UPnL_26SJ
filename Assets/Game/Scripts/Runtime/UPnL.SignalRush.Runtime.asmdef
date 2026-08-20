@@ -1,5 +1,6 @@
 {
   "name": "UPnL.SignalRush.Runtime",
   "rootNamespace": "UPnL.SignalRush",
+  "references": ["Unity.InputSystem", "Unity.ugui"],
   "autoReferenced": true
 }
