@@ -37,6 +37,14 @@ namespace UPnL.SignalRush.Combo
             NotifyChanged();
         }
 
+        public void Reset()
+        {
+            Current = 0;
+            Best = 0;
+            Interrupted = 0;
+            NotifyChanged();
+        }
+
         private void Increment()
         {
             if (Current == Cap)

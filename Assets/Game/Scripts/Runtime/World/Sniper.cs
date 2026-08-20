@@ -31,6 +31,11 @@ namespace UPnL.SignalRush.World
             ReleaseProjectile();
         }
 
+        public void ConfigurePlayerTarget(Transform playerTarget)
+        {
+            _playerTarget = playerTarget;
+        }
+
         public bool TryActivate()
         {
             if (IsTargetting || HasUnresolvedProjectile || !HasValidConfiguration())

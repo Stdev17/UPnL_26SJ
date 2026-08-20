@@ -15,6 +15,11 @@ namespace UPnL.SignalRush.World
             transform.position = slot.Position;
         }
 
+        public void ConfigurePlayerTarget(Transform playerTarget)
+        {
+            _sniper?.ConfigurePlayerTarget(playerTarget);
+        }
+
         public bool TryActivateSniper()
         {
             return Role == ChunkRole.SniperRear && _sniper != null && _sniper.TryActivate();

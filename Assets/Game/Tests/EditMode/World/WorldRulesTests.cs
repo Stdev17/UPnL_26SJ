@@ -129,7 +129,7 @@ namespace UPnL.SignalRush.Tests.World
         }
 
         [Test]
-        public void SpawningSniperRearActivatesItsOwnedSniper()
+        public void SpawningSniperRearInjectsScenePlayerBeforeActivation()
         {
             var fixture = CreateSpawner();
             fixture.spawner.Begin();
@@ -241,7 +241,7 @@ namespace UPnL.SignalRush.Tests.World
                 CreateChunkPrefab("Decor", root.transform),
                 CreateChunkPrefab("Sniper", root.transform)
             };
-            ConfigureSniperChunk(prefabs[3], player, tuning, root.transform);
+            ConfigureSniperChunk(prefabs[3], tuning, root.transform);
             var serialized = new SerializedObject(spawner);
             serialized.FindProperty("_tuning").objectReferenceValue = tuning;
             serialized.FindProperty("_origin").objectReferenceValue = origin;
@@ -253,7 +253,7 @@ namespace UPnL.SignalRush.Tests.World
             return (spawner, tuning, player, root, prefabs);
         }
 
-        private static void ConfigureSniperChunk(GameObject chunkObject, Transform player, SignalRushTuning tuning, Transform fixtureRoot)
+        private static void ConfigureSniperChunk(GameObject chunkObject, SignalRushTuning tuning, Transform fixtureRoot)
         {
             var sniper = chunkObject.AddComponent<Sniper>();
             var muzzle = new GameObject("Muzzle").transform;
@@ -263,7 +263,6 @@ namespace UPnL.SignalRush.Tests.World
             projectileObject.AddComponent<Rigidbody2D>();
             var projectile = projectileObject.AddComponent<Projectile>();
             SetObjectReference(sniper, "_tuning", tuning);
-            SetObjectReference(sniper, "_playerTarget", player);
             SetObjectReference(sniper, "_muzzle", muzzle);
             SetObjectReference(sniper, "_projectilePrefab", projectile);
             SetObjectReference(chunkObject.GetComponent<Chunk>(), "_sniper", sniper);

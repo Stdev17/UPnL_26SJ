@@ -127,6 +127,31 @@ namespace UPnL.SignalRush.Tests.Combo
             Destroy(gameObject, tuning);
         }
 
+        [Test]
+        public void ResetClearsAllRunComboStateAndRaisesChangedOnce()
+        {
+            var counter = CreateCounter(out var gameObject, out var tuning);
+            counter.RecordBreak();
+            counter.RecordParry();
+            counter.RecordHit();
+            counter.RecordBreak();
+            var changes = 0;
+            counter.Changed += (_, _, _, _) => changes++;
+
+            counter.Reset();
+
+            Assert.That(counter.Current, Is.Zero);
+            Assert.That(counter.Best, Is.Zero);
+            Assert.That(counter.Interrupted, Is.Zero);
+            Assert.That(changes, Is.EqualTo(1));
+
+            counter.Reset();
+
+            Assert.That(changes, Is.EqualTo(2));
+
+            Destroy(gameObject, tuning);
+        }
+
         private static ComboCounter CreateCounter(out GameObject gameObject, out SignalRushTuning tuning)
         {
             gameObject = new GameObject();

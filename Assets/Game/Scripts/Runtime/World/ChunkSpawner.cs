@@ -75,7 +75,10 @@ namespace UPnL.SignalRush.World
             var chunk = Instantiate(prefab, slot.Position, Quaternion.identity, transform);
             chunk.Place(slot);
             if (role == ChunkRole.SniperRear)
+            {
+                chunk.ConfigurePlayerTarget(_player);
                 chunk.TryActivateSniper();
+            }
             _spawned.Add(chunk);
             return chunk;
         }

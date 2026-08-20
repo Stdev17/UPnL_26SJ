@@ -4,7 +4,7 @@ using UPnL.SignalRush.Tuning;
 
 namespace UPnL.SignalRush.Player
 {
-    public enum DamageCause { Projectile, OutOfScreen }
+    public enum DamageCause { Projectile, OutOfScreen, Obstacle }
 
     public enum PlayerState { Active, Hit, Respawning, Dead }
 
