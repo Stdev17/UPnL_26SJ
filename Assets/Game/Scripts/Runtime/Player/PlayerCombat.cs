@@ -98,7 +98,7 @@ namespace UPnL.SignalRush.Player
             _overlaps.Clear();
             var filter = new ContactFilter2D();
             filter.NoFilter();
-            _attackHitbox.OverlapCollider(filter, _overlaps);
+            _attackHitbox.Overlap(filter, _overlaps);
 
             foreach (var overlap in _overlaps)
             {
